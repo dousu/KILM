@@ -1,2 +1,2 @@
 # KILM
-Iterated Learning Model which is S.Kirby(2002) proposed
+Implementation of Iterated Learning Model which is proposed by S.Kirby(2002)
