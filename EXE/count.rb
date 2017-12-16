@@ -104,8 +104,8 @@ def outputCOUNTINGbox
 end
 
 $ITERATEnum=100
-$msilm="../LEILA/msilm.exe"
-$dictionary="../LEILA/data.dic"
+$msilm="../SOURCE/msilm.exe"
+$dictionary="../SOURCE/data.dic"
 $THREADnum=10
 $RESULTbox=Hash.new
 $COUNTINGbox=Array.new
