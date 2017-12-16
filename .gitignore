@@ -109,6 +109,10 @@ ipch/
 *.psess
 *.vsp
 *.vspx
+.vs/
+.sln
+*.vcxproj
+*.vcxproj.*
 
 # Guidance Automation Toolkit
 *.gpState
@@ -147,23 +151,15 @@ publish/
 *.Publish.xml
 *.pubxml
 
-
-
 # NuGet Packages Directory
 packages/
-
-
 
 # Windows Azure Build Output
 csx
 *.build.csdef
 
-
-
 # Windows Store app package directory
 AppPackages/
-
-
 
 # Others
 sql/
@@ -178,8 +174,6 @@ ClientBin/
 
 # RIA/Silverlight projects
 Generated_Code/
-
-
 
 # Backup & report files from converting an old project file to a newer
 
