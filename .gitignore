@@ -110,7 +110,7 @@ ipch/
 *.vsp
 *.vspx
 .vs/
-.sln
+*.sln
 *.vcxproj
 *.vcxproj.*
 
