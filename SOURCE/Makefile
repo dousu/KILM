@@ -6,7 +6,7 @@ HD = Distance.hpp
 OPT = -g -O2
 
 ki: ${OBJ}
-	${CXX} ${OPT} KILM_main.cpp ${OBJ} ${HD} ${LD} ${LIBS} -o KILM.exe
+	${CXX} ${OPT} KILM_main.cpp ${OBJ} ${HD} ${LD} ${LIBS} -o kilm.exe
 
 .cpp.o:
 	${CXX} ${OPT} -c $< ${ID} ${LD} ${LIBS2}
