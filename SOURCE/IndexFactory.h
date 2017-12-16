@@ -2,7 +2,7 @@
  * CategoryFactory.h
  *
  *  Created on: 2011/05/20
- *      Author: Rindow
+ *      Author: Hiroki Sudo
  */
 
 #ifndef INDEXFACTORY_H_

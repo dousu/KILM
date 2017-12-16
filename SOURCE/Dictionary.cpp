@@ -2,7 +2,7 @@
  * Dictionary.cpp
  *
  *  Created on: 2011/05/23
- *      Author: Rindow
+ *      Author: Hiroki Sudo
  */
 
 #include "Dictionary.h"

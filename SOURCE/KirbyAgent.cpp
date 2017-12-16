@@ -2,7 +2,7 @@
  * KirbyAgent.cpp
  *
  *  Created on: 2011/06/07
- *      Author: Rindow
+ *      Author: Hiroki Sudo
  */
 
 #include "KirbyAgent.h"

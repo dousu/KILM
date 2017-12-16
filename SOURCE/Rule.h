@@ -2,7 +2,7 @@
  * Rule.h
  *
  *  Created on: 2011/05/18
- *      Author: Rindow
+ *      Author: Hiroki Sudo
  */
 
 #ifndef RULE_H_

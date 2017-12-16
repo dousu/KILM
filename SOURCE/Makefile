@@ -5,8 +5,6 @@ OBJ = KirbyAgent.o KnowledgeBase.o Rule.o Element.o Dictionary.o IndexFactory.o 
 HD = Distance.hpp
 OPT = -g -O2
 
-
-
 ki: ${OBJ}
 	${CXX} ${OPT} KILM_main.cpp ${OBJ} ${HD} ${LD} ${LIBS} -o KILM.exe
 

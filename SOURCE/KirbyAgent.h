@@ -2,7 +2,7 @@
  * KirbyAgent.h
  *
  *  Created on: 2011/06/07
- *      Author: Rindow
+ *      Author: Hiroki Sudo
  */
 
 #ifndef KIRBYAGENT_H_

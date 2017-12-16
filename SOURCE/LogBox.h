@@ -2,7 +2,7 @@
  * LogBox.h
  *
  *  Created on: 2011/06/18
- *      Author: Rindow
+ *      Author: Hiroki Sudo
  */
 
 #ifndef LOGBOX_H_

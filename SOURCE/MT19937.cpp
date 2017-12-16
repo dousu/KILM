@@ -2,7 +2,7 @@
  * MT19937E.cpp
  *
  *  Created on: 2011/08/04
- *      Author: Rindow
+ *      Author: Hiroki Sudo
  */
 
 #include "MT19937.h"
