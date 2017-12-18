@@ -1,7 +1,7 @@
 /*
  * main.cpp
  *
- *  Created on: 2011/06/07
+ *  Created on: 2012/06/07
  *      Author: Hiroki Sudo
  */
 #include "KILM_main.h"
@@ -28,8 +28,6 @@ void save_agent(
 	ofs << boost::serialization::make_nvp("DC", dic);
     ofs << boost::serialization::make_nvp("KA", agent);
 }
-
-
 
 template<typename _IFS>
 void resume_agent(
@@ -86,44 +84,6 @@ void construct_meanings(std::vector<Rule>& meanings) {
 	}
 }
 
-//std::vector<Rule> construct_meanings(
-//		int VERB_INDEX_BEGIN,
-//		int VERB_INDEX_END,
-//		int NOUN_INDEX_BEGIN,
-//		int NOUN_INDEX_END
-//){
-//	std::vector<Rule> meanings;
-//
-//	//construct means
-//	for(int i = VERB_INDEX_BEGIN; i <= VERB_INDEX_END; i++){
-//		Element verb;
-//		verb.set_ind(i);
-//
-//		for(int j = NOUN_INDEX_BEGIN; j <= NOUN_INDEX_END; j++){
-//			Element ind1;
-//			ind1.set_ind(j);
-//			for(int k = NOUN_INDEX_BEGIN; k <= NOUN_INDEX_END; k++){
-//				if(j != k){
-//					Element ind2;
-//					std::vector<Element> internal,external;
-//					Rule mean;
-//
-//					ind2.set_ind(k);
-//
-//					internal.push_back(verb);
-//					internal.push_back(ind1);
-//					internal.push_back(ind2);
-//
-//					mean.set_sentence(internal, external);
-//					meanings.push_back(mean);
-//				}
-//			}
-//		}
-//	}
-//
-//	return meanings;
-//}
-
 void construct_individuals(std::vector<Element>& inds, Dictionary &dic) {
 	Dictionary::DictionaryType::iterator dic_it;
 	dic_it = dic.individual.begin();
@@ -138,23 +98,8 @@ std::vector<std::vector<double> > analyze(std::vector<Rule>& meanings, std::vect
 		KirbyAgent& agent1, KirbyAgent& agent2) {
     
 	std::vector<double> unit_result, inter_result_sent, inter_result_word;
+	std::vector<std::vector<double> > result;
 	
-//        std::vector<double> effect_sent, effect_word;
-	
-        std::vector<std::vector<double> > result;
-	
-//        int unit_analyze_item_num = 4, vertices_num = 0;
-
-//	//行列の初期化
-//	vertices_num = NetWorld::agent_num;
-//	effect_sent.resize(vertices_num, vertices_num);
-//	effect_word.resize(vertices_num, vertices_num);
-//	unit_result.resize(vertices_num, unit_analyze_item_num);
-//	inter_result_sent.resize(vertices_num, vertices_num);
-//	inter_result_word.resize(vertices_num, vertices_num);
-
-//	effect_sent.clear();
-//	effect_word.clear();
 	unit_result.clear();
 	inter_result_sent.clear();
 	inter_result_word.clear();
@@ -166,26 +111,10 @@ std::vector<std::vector<double> > analyze(std::vector<Rule>& meanings, std::vect
 	calculate_language_distance(inter_result_sent, inter_result_word, meanings,
 			individuals, agent1, agent2);
 
-	//今のところ三角行列になってるからそれを変えてる
-	//inter_result_sent = boost::numeric::ublas::trans(inter_result_sent) + inter_result_sent;
-	//inter_result_word = boost::numeric::ublas::trans(inter_result_word) + inter_result_word;
-
-	//多分距離行列×接続行列で前世代との差分を使えばRecurrent Network見たいな重み評価に使える
-	//が今は対角だけつかう（近傍変異）
-//	effect_sent = boost::numeric::ublas::prod(inter_result_sent,
-//			NetWorld::connected_matrix);
-//	effect_word = boost::numeric::ublas::prod(inter_result_word,
-//			NetWorld::connected_matrix);
-
-	//normalize(effect_sent, world);
-	//normalize(effect_word, world1);
-
 	//リターンバケットに結果をつめて返す
 	result.push_back(unit_result);
 	result.push_back(inter_result_sent);
 	result.push_back(inter_result_word);
-//	result.push_back(effect_sent);
-//	result.push_back(effect_word);
 
 	return result;
 }
@@ -239,28 +168,8 @@ void calculate_language_distance(
 		std::vector<Rule>& meanings, std::vector<Element>& words,
 		KirbyAgent& agent1, KirbyAgent& agent2) {
 
-//	int agent_MAX;
-//	int agent_index1 = 0;
-//	int agent_index2 = 0;
-//	agent_MAX = NetWorld::agent_num;
-
-//	for (agent_index1 = 0; agent_index1 < agent_MAX; agent_index1++) {
-//		for (agent_index2 = 0; agent_index2 < agent_MAX; agent_index2++) {
-                    lev_sent_matrix.push_back(
-                            calculate_sudo_distance(meanings,
-                                agent1.kb,
-				agent2.kb));
-//		}
-//	}
-
-//	for (agent_index1 = 0; agent_index1 < agent_MAX; agent_index1++) {
-//		for (agent_index2 = 0; agent_index2 < agent_MAX; agent_index2++) {
-			lev_word_matrix.push_back(// 0;
-					calculate_word_distance(words,
-							agent1.kb,
-							agent2.kb));
-//		}
-//	}
+        lev_sent_matrix.push_back(
+            calculate_sudo_distance(meanings,agent1.kb,agent2.kb));
 }
 
 double calculate_word_distance(std::vector<Element>& words, KnowledgeBase& kb1,

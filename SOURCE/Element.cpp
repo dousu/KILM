@@ -1,7 +1,7 @@
 /*
  * Element.cpp
  *
- *  Created on: 2011/05/19
+ *  Created on: 2012/05/19
  *      Author: Hiroki Sudo
  */
 
@@ -252,24 +252,10 @@ int main(int arg, char** argv){
 		k=0;
 		while (it2 != elements.end()){
 			if(*it1 == *it2){
-//				std::cout << "*************************************" <<std::endl;
-
-				//if(j != 28 && k != 28){
-					std::cout << j << " : " << k << " ";
-					std::cout << (*it1).to_s();
-					std::cout << " = " ;
-					std::cout << (*it2).to_s() << std::endl;
-				//}
-				/*
-				 * なぜかElement28番のto_sがおかしい……
-				 * 比較はできているようだから、とりあえずスルー
-				 * */
-				/*
-				if(elements[28] == *it1){
-					std::cout << (*(it1)).to_s() << "::::::::::::" << elements[28].to_s() << "???" << std::endl;
-				}
-				*/
-
+				std::cout << j << " : " << k << " ";
+				std::cout << (*it1).to_s();
+				std::cout << " = " ;
+				std::cout << (*it2).to_s() << std::endl;
 			}
 			k++;
 			it2++;
@@ -277,9 +263,6 @@ int main(int arg, char** argv){
 		j++;
 		it1++;
 	}
-
-	it = elements.begin();
-	std::cout << elements[28].to_s() << std::endl;
 
 	elements2 = elements;
 	it = elements2.begin();

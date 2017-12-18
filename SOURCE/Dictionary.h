@@ -1,7 +1,7 @@
 /*
  * Dictionary.h
  *
- *  Created on: 2011/05/23
+ *  Created on: 2012/05/23
  *      Author: Hiroki Sudo
  */
 
@@ -14,10 +14,6 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
-//#include <boost/filesystem.hpp>
-//#include <boost/filesystem/path.hpp>
-//#include <boost/filesystem/fstream.hpp>
-//#include <boost/iostreams/operations.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/map.hpp>
