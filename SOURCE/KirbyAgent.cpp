@@ -59,7 +59,6 @@ KirbyAgent
 KirbyAgent::make_child(void) {
     KirbyAgent child;
     child.generation_index = generation_index + 1;
-    child.serial = KirbyAgent::indexer.generate();
     return child;
 }
 
