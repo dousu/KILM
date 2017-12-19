@@ -1,7 +1,7 @@
 /*
  * KnowledgeBase.cpp
  *
- *  Created on: 2011/05/20
+ *  Created on: 2012/05/20
  *      Author: Hiroki Sudo
  */
 
@@ -2226,53 +2226,14 @@ KnowledgeBase::logging_off(void) {
 }
 
 void
-KnowledgeBase::omissionA_on(void) {
+KnowledgeBase::omission_on(void) {
     OMISSION_FLAG = true;
-    OMISSION_A = true;
 }
 
 void
-KnowledgeBase::omissionA_off(void) {
+KnowledgeBase::omission_off(void) {
     OMISSION_FLAG = false;
-    OMISSION_A = false;
 }
-
-void
-KnowledgeBase::omissionB_on(void) {
-    OMISSION_FLAG = true;
-    OMISSION_B = true;
-}
-
-void
-KnowledgeBase::omissionB_off(void) {
-    OMISSION_FLAG = false;
-    OMISSION_B = false;
-}
-
-void
-KnowledgeBase::omissionC_on(void) {
-    OMISSION_FLAG = true;
-    OMISSION_C = true;
-}
-
-void
-KnowledgeBase::omissionC_off(void) {
-    OMISSION_FLAG = false;
-    OMISSION_C = false;
-}
-
-void
-KnowledgeBase::omissionD_on(void) {
-    OMISSION_FLAG = true;
-    OMISSION_D = true;
-}
-
-void
-KnowledgeBase::omissionD_off(void) {
-    OMISSION_FLAG = false;
-    OMISSION_D = false;
-}
-
 void
 KnowledgeBase::set_control(uint32_t FLAGS) {
     CONTROLS |= FLAGS;

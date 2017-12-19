@@ -1,7 +1,7 @@
 /*
  * KnowledgeBase.h
  *
- *  Created on: 2011/05/20
+ *  Created on: 2012/05/20
  *      Author: Hiroki Sudo
  */
 
@@ -88,11 +88,6 @@ public:
     RuleDBType wordDB;
     bool DIC_BLD;
 
-    typedef boost::unordered_map<std::vector<int>,
-    boost::unordered_map<int, std::vector<Rule> > > IndexT;
-    boost::shared_ptr<IndexT> fabricate_index;
-    bool indexed;
-
     static bool LOGGING_FLAG;
     static int ABSENT_LIMIT;
     static uint32_t CONTROLS;
@@ -105,10 +100,6 @@ public:
     static const uint32_t ANTECEDE_COMPOSITION = 0x04;
 
     static bool OMISSION_FLAG;
-    static bool OMISSION_A;
-    static bool OMISSION_B;
-    static bool OMISSION_C;
-    static bool OMISSION_D;
 
     static std::vector<Rule> MEANING_SPACE;
 
@@ -230,21 +221,9 @@ public:
     static void
     logging_off(void);
     static void
-    omissionA_on(void);
-    static void
-    omissionA_off(void);
-    static void
-    omissionB_on(void);
-    static void
-    omissionB_off(void);
-    static void
-    omissionC_on(void);
-    static void
-    omissionC_off(void);
-    static void
-    omissionD_on(void);
-    static void
-    omissionD_off(void);
+    omission_on(void);
+	static void
+	omission_off(void);
     KnowledgeBase&
             operator=(const KnowledgeBase& dst);
     static void
@@ -292,8 +271,7 @@ private:
 
     bool
     merging(Rule& src);
-    void
-    collect_merge_cat(Rule&, RuleDBType&, std::map<int, bool>&);
+	void collect_merge_cat(Rule& src, std::vector<Rule>& words, std::map<int, bool>& unified_cat);
     void
     merge_noun_proc(Rule& src, RuleDBType& DB,
             std::map<int, bool>& unified_cat);

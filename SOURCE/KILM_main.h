@@ -1,7 +1,7 @@
 /*
  * kirby_main.h
  *
- *  Created on: 2011/06/23
+ *  Created on: 2012/06/23
  *      Author: rindou
  */
 
@@ -62,8 +62,7 @@ expression(std::vector<Rule>& meanings, KirbyAgent& agent);
 void
 calculate_language_distance(
     std::vector<double>& dist_vector,
-    std::vector<Rule>& meanings, std::vector<Element>& words, KirbyAgent& agent1,
-    KirbyAgent& agent2);
+    std::vector<Rule>& meanings, KirbyAgent& agent1,KirbyAgent& agent2);
 
 void
 analyze_and_output(Parameters& param, std::vector<Rule> meaning_space,

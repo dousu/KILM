@@ -282,7 +282,7 @@ int main(int argc, char* argv[]){
 	int               utterance_counter =0;
 
 	int use_meaning_index = 0;
-	int generation_counter = 0;
+	int generation_counter = 1;
 	int Base_Counter = 0;
 	Rule utter, use_meaning;
 
@@ -553,7 +553,7 @@ int main(int argc, char* argv[]){
 	}
 
 	//main loop
-	while(generation_counter < param.MAX_GENERATIONS){
+	while(generation_counter <= param.MAX_GENERATIONS){
 		std::vector<Rule> meanings_copy;
 		meanings_copy = meaning_space;
 
@@ -628,9 +628,9 @@ int main(int argc, char* argv[]){
 #endif
 
 		if(param.ANALYZE){
-			analyze_and_output(param, meaning_space, individuals,
+			analyze_and_output(param, meaning_space,
 					parent_agent, parent_agent);
-			analyze_and_output(param, meaning_space, individuals,
+			analyze_and_output(param, meaning_space,
 					parent_agent, child_agent);
 		}
 

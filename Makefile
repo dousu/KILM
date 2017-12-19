@@ -1,15 +1,19 @@
 OUTPUT = a.out
 LD = -L/usr/local/lib
 LIBS = -lboost_serialization -lboost_thread -lboost_system -lboost_program_options
+SOURCEDIR = ./SOURCE
 OBJ = KirbyAgent.o KnowledgeBase.o Rule.o Element.o Dictionary.o IndexFactory.o Prefices.o LogBox.o Parameters.o MT19937.o
+OBJS = $(addprefix ${SOURCEDIR}/, $(OBJ))
 HD = Distance.hpp
+HDS = $(addprefix ${SOURCEDIR}/, $(HD))
 OPT = -g -O2
 
-ki: ${OBJ}
-	${CXX} ${OPT} KILM_main.cpp ${OBJ} ${HD} ${LD} ${LIBS} -o kilm.exe
+ki: ${OBJS}
+	${CXX} ${OPT} ${SOURCEDIR}/KILM_main.cpp ${OBJS} ${HDS} ${LD} ${LIBS} -o ${SOURCEDIR}/kilm.exe
 
-.cpp.o:
-	${CXX} ${OPT} -c $< ${ID} ${LD} ${LIBS2}
+$(SOURCEDIR)/%.o: %.cpp
+	@[ -d $(SOURCEDIR/) ]
+	${CXX} ${OPT} ${LD} ${LIBS} -o $@ -c $<
 
 KILM_main.cpp: KirbyAgent.o LogBox.o Parameters.o MT19937.o
 KirbyAgent.o: KnowledgeBase.o LogBox.o KirbyAgent.h
