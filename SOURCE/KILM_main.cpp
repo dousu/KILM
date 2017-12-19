@@ -94,32 +94,28 @@ void construct_individuals(std::vector<Element>& inds, Dictionary &dic) {
 	}
 }
 
-std::vector<std::vector<double> > analyze(std::vector<Rule>& meanings, std::vector<Element>& individuals,
-		KirbyAgent& agent1, KirbyAgent& agent2) {
+std::vector<std::vector<double> > analyze(std::vector<Rule>& meanings, KirbyAgent& agent1, KirbyAgent& agent2) {
     
-	std::vector<double> unit_result, inter_result_sent, inter_result_word;
+	std::vector<double> unit_result, result_dist;
 	std::vector<std::vector<double> > result;
 	
 	unit_result.clear();
-	inter_result_sent.clear();
-	inter_result_word.clear();
+	result_dist.clear();
 
 	//Agent単体の分析
 	unit_analyze(unit_result, meanings, agent1);
 
 	//Agent相互の分析
-	calculate_language_distance(inter_result_sent, inter_result_word, meanings,
-			individuals, agent1, agent2);
+	calculate_language_distance(result_dist, meanings, agent1, agent2);
 
 	//リターンバケットに結果をつめて返す
 	result.push_back(unit_result);
-	result.push_back(inter_result_sent);
-	result.push_back(inter_result_word);
+	result.push_back(result_dist);
 
 	return result;
 }
 
-//std::vector<int> analyze(std::vector<Rule>& meanings, KirbyAgent& agent){
+//std::vector<int> agent_to_s(std::vector<Rule>& meanings, KirbyAgent& agent){
 //	std::vector<int> result;
 //	result.push_back(agent.generation_index);
 //	result.push_back(expression(meanings,agent));
@@ -133,20 +129,17 @@ void unit_analyze(std::vector<double>& result_matrix,
 	int index = 0, max_index;
 	int GEN = 0, EXP = 1, SRN = 2, WRN = 3;
 
-//	max_index = world.agents.size();
-//	for (index = 0; index < max_index; index++) {
-		//Item1 :generation number
-		result_matrix.push_back(agent.generation_index);
+	//Item1 :generation number
+	result_matrix.push_back(agent.generation_index);
 
-		//Item2 :expressiveness
-		result_matrix.push_back(expression(meanings, agent));
+	//Item2 :expressiveness
+	result_matrix.push_back(expression(meanings, agent));
 
-		//Item3 :sentence rule number
-		result_matrix.push_back(agent.kb.sentenceDB.size());
+	//Item3 :sentence rule number
+	result_matrix.push_back(agent.kb.sentenceDB.size());
 
-		//Item4 :Word rule number
-		result_matrix.push_back(agent.kb.wordDB.size());
-//	}
+	//Item4 :Word rule number
+	result_matrix.push_back(agent.kb.wordDB.size());
 }
 
 int expression(std::vector<Rule>& meanings, KirbyAgent& agent){
@@ -163,74 +156,16 @@ int expression(std::vector<Rule>& meanings, KirbyAgent& agent){
 }
 
 void calculate_language_distance(
-		std::vector<double>& lev_sent_matrix,
-		std::vector<double>& lev_word_matrix,
-		std::vector<Rule>& meanings, std::vector<Element>& words,
+		std::vector<double>& dist_matrix,
+		std::vector<Rule>& meanings,
 		KirbyAgent& agent1, KirbyAgent& agent2) {
 
-        lev_sent_matrix.push_back(
-            calculate_sudo_distance(meanings,agent1.kb,agent2.kb));
-}
-
-double calculate_word_distance(std::vector<Element>& words, KnowledgeBase& kb1,
-		KnowledgeBase& kb2) {
-	std::vector<Rule> kb1_wd_box, kb2_wd_box;
-	std::vector<Rule>::iterator kb1_wd_it, kb2_wd_it;
-	std::vector<Element>::iterator word_it;
-	std::pair<std::multimap<Element, Rule>::iterator,
-			std::multimap<Element, Rule>::iterator> kb1_range, kb2_range;
-
-	double lev_w = 0;
-	int cnt = 0;
-
-	word_it = words.begin();
-	for (; word_it != words.end(); word_it++) {
-		kb1_range = kb1.normal_word_dic.equal_range(*word_it);
-		kb2_range = kb2.normal_word_dic.equal_range(*word_it);
-		for (; kb1_range.first != kb1_range.second; kb1_range.first++) {
-			for (kb2.normal_word_dic.equal_range(*word_it);
-					kb2_range.first != kb2_range.second; kb2_range.first++) {
-				lev_w += Distance::levenstein(
-						(*(kb1_range.first)).second.external,
-						(*(kb2_range.first)).second.external);
-				cnt++;
-			}
-		}
-	}
-
-	if (cnt != 0)
-		return lev_w / (double) cnt;
-	else
-		return lev_w;
-}
-
-void tf_result_output(Parameters param, std::string file,
-		std::vector<std::vector<double> > res) {
-	{
-		//besic analyze
-		//boost::filesystem::path basic(file.c_str());
-		//boost::filesystem::ofstream ofs(param.BASE_PATH / basic, std::ios::out | std::ios::app);
-		std::string path;
-		path = param.BASE_PATH + file;
-		std::ofstream ofs(path.c_str());
-
-		ofs << "#RESULT" << std::endl;
-
-		//unit
-		ofs << "BASIC=" << tr_vector_double_to_string(res[0]) << std::endl;
-
-		//distance
-		ofs << "SDISTM=" << tr_vector_double_to_string(res[1]) << std::endl;
-		ofs << "WDIST=" << tr_vector_double_to_string(res[2]) << std::endl;
-//		ofs << "CSDISTM=" << tr_vector_double_to_string(res[3]) << std::endl;
-//		ofs << "CWDIST=" << tr_vector_double_to_string(res[4]) << std::endl;
-		ofs.close();
-	}
+        dist_matrix.push_back(
+            calculate_distance(meanings,agent1.kb,agent2.kb));
 }
 
 void analyze_and_output(Parameters& param, std::vector<Rule> meaning_space,
-		std::vector<Element> individuals, KirbyAgent& agent1, KirbyAgent& agent2) {
-//	std::vector<NetWorld>::iterator n_it;
+		KirbyAgent& agent1, KirbyAgent& agent2) {
 	std::vector<std::vector<double> > res;
 	std::string index_str, file, file_postfix;
 	int index;
@@ -239,31 +174,22 @@ void analyze_and_output(Parameters& param, std::vector<Rule> meaning_space,
 	index_str = boost::lexical_cast<std::string>(index);
 	file = param.FILE_PREFIX + "_" + param.DATE_STR + "_" + index_str + ".rst";
 
-	res = analyze(meaning_space, individuals, agent1, agent2);
+	res = analyze(meaning_space, agent1, agent2);
 
-	if (false) {
-		boost::thread th(boost::bind(tf_result_output, param, file, res));
-		th.detach();
-	} else {
-		//basic analyze
-		std::ofstream ofs((param.BASE_PATH + file).c_str(),
-				std::ios::app | std::ios::out);
+	//basic analyze
+	std::ofstream ofs((param.BASE_PATH + file).c_str(),
+			std::ios::app | std::ios::out);
 
-		ofs << "#RESULT" << std::endl;
+	ofs << "#RESULT" << std::endl;
 
-		//unit
-		ofs << "BASIC=" << tr_vector_double_to_string(res[0]) << std::endl;
+	//unit
+	ofs << "BASIC=" << tr_vector_double_to_string(res[0]) << std::endl;
 
-		//distance
-		ofs << "SDISTM=" << tr_vector_double_to_string(res[1]) << std::endl;
-		ofs << "WDIST=" << tr_vector_double_to_string(res[2]) << std::endl;
-//		ofs << "CSDISTM=" << tr_vector_double_to_string(res[3]) << std::endl;
-//		ofs << "CWDIST=" << tr_vector_double_to_string(res[4]) << std::endl;
-	}
+	//distance(parent and child)
+	ofs << "SDISTM=" << tr_vector_double_to_string(res[1]) << std::endl;
 }
 
-//method written by sudo
-double calculate_sudo_distance(std::vector<Rule>& meanings,
+double calculate_distance(std::vector<Rule>& meanings,
 		KnowledgeBase& kb1, KnowledgeBase& kb2) {
     
 	std::vector<Rule>::iterator mean_it, kb1_pat_it, kb2_pat_it, kb1_all_it, kb2_all_it, target_it;
@@ -292,9 +218,7 @@ double calculate_sudo_distance(std::vector<Rule>& meanings,
                 ham=Distance::hamming((*kb1_all_it).internal, (*kb2_all_it).internal);
                 if(ham<min_ham){
                     min_ham=ham;
-//                    std::cout << target_rules.size() << std::endl;
                     target_rules=temp;
-//                    std::cout << target_rules.size() << std::endl;
                     target_rules.push_back(*kb2_all_it);
                 }else if(ham==min_ham){
                     target_rules.push_back(*kb2_all_it);
@@ -303,13 +227,11 @@ double calculate_sudo_distance(std::vector<Rule>& meanings,
             min_lev=2;
             target_it=target_rules.begin();
             for(;target_it!=target_rules.end();target_it++){
-//                std::cout << (*target_it).to_s() << std::endl;
                 lev=Distance::levenstein((*kb1_all_it).external,(*target_it).external);
                 if(lev<min_lev){
                     min_lev=lev;
                 }
             }
-//            std::cout << min_lev << std::endl;
             lev_sum+=min_lev;
         }
         
@@ -363,8 +285,6 @@ int main(int argc, char* argv[]){
 	int generation_counter = 0;
 	int Base_Counter = 0;
 	Rule utter, use_meaning;
-//	std::vector<Rule> meanings_copy;
-//	std::vector<std::vector<int> > result;
 
 
 	/**************************************************
@@ -388,7 +308,7 @@ int main(int argc, char* argv[]){
 			/*発話回数*/
 					("utterances,u",
 					boost::program_options::value<double>(),
-					"Uttering ratio for meaning space (0.7/[0~1])")
+					"Uttering ratio for meaning space (0.5/[0~1])")
 			/*ロギング*/
 					("logging,l",
 					"Logging")
@@ -411,7 +331,7 @@ int main(int argc, char* argv[]){
 					boost::program_options::value<int>(),
 					"Dictionary file name for meaning space(\"./data.dic\")")
 
-			/*生成規則再利用*/
+			/*random生成規則再利用*/
 					("keep-random-rule",
 					"Keep created rules with a random word into parent knowledge-base")
 			/*規則削除使用*/
@@ -426,7 +346,7 @@ int main(int argc, char* argv[]){
 			/*FILE PREFIX*/
 					("prefix",
 					boost::program_options::value<std::string>(),
-					"Set file prefix (\"LEKA\")")
+					"Set file prefix (\"KILM\")")
 
 			/*BASE PATH*/
 					("path",
@@ -530,67 +450,43 @@ int main(int argc, char* argv[]){
 	//resume
 	if(param.RESUME){
 		try{
-//			boost::filesystem::ifstream ifs(param.BASE_PATH / param.RESUME_FILE);
-                        std::ifstream ifs((param.BASE_PATH + param.RESUME_FILE).c_str());
+                std::ifstream ifs((param.BASE_PATH + param.RESUME_FILE).c_str());
 
-			switch(param.SAVE_FORMAT){
-			case Parameters::BIN:
-			{
-				boost::archive::binary_iarchive ia(ifs);
-				resume_agent(ia, param, MT19937::icount, MT19937::rcount, dic, meaning_space, Base_Counter, parent_agent);
-			}
-			break;
+				switch(param.SAVE_FORMAT){
+					case Parameters::BIN:
+					{
+						boost::archive::binary_iarchive ia(ifs);
+						resume_agent(ia, param, MT19937::icount, MT19937::rcount, dic, meaning_space, Base_Counter, parent_agent);
+					}
+					break;
 
-			case Parameters::XML:
-			{
-				boost::archive::xml_iarchive ia(ifs);
-				resume_agent(ia, param, MT19937::icount, MT19937::rcount, dic, meaning_space, Base_Counter, parent_agent);
-			}
-			break;
+					case Parameters::XML:
+					{
+						boost::archive::xml_iarchive ia(ifs);
+						resume_agent(ia, param, MT19937::icount, MT19937::rcount, dic, meaning_space, Base_Counter, parent_agent);
+					}
+					break;
 
-			default:
-				return 0;
-			}
+					default:
+					return 0;
+				}
 
-			//child_agent = parent_agent.make_child();
-			MT19937::set_seed(param.RANDOM_SEED);
-			MT19937::waste();
-		}
-		catch(...){
+				MT19937::set_seed(param.RANDOM_SEED);
+				MT19937::waste();
+		}catch(...){
 			std::cerr << "State file Error" << std::endl;
 			return 0;
 		}
-	}
-	else{
+	}else{
 
 		/*
 		 * Meaning Space
 		 */
 		MT19937::set_seed(param.RANDOM_SEED);
-//		KnowledgeBase::CONTROLS |= KnowledgeBase::ANTECEDE_COMPOSITION;
-//		KnowledgeBase::CONTROLS |= param.CONTROLS;
-                KnowledgeBase::set_control(
-				KnowledgeBase::ANTECEDE_COMPOSITION | param.CONTROLS);
+        KnowledgeBase::set_control(KnowledgeBase::ANTECEDE_COMPOSITION | param.CONTROLS);
 
 
 		//initialize
-//                if (param.DEL_LONG_RULE) {
-//			KirbyAgent::DEL_LONG_RULE = true;
-//			KirbyAgent::DEL_LONG_RULE_LENGTH = param.DEL_LONG_RULE_LENGTH;
-//		}
-
-//		if (param.EX_LIMIT != 0) {
-//			KirbyAgent::SHORT_MEM_SIZE = param.EX_LIMIT;
-//		}
-
-//		if (param.PARENT_ONCE) {
-//			NetWorld::PARENT_ONCE = true;
-//		}
-//KirbyAgent::UTTER_MINIMUM = param.UTTER_MINIMUM;
-//KirbyAgent::INDEXER_FLAG = param.INDEX;
-                
-		KirbyAgent::UTTER_MINIMUM = false;
-		KirbyAgent::INDEXER_FLAG = false;
 		dic.load(param.DICTIONARY_FILE);
 		
 		construct_meanings(meaning_space);
@@ -606,16 +502,6 @@ int main(int argc, char* argv[]){
 			LogBox::push_log("\n");
 		}
 	}
-
-
-	///*
-	// * Utterance times
-	// */
-	//param.UTTERANCES = (int)round(param.PER_UTTERANCES * meaning_space.size());
-	//if(param.LOGGING){
-	//	LogBox::push_log("UTTRANCE TIMES = " + boost::lexical_cast<std::string>(param.UTTERANCES));
-	//}
-
 
 	if(param.LOGGING)
 		KirbyAgent::logging_on();
@@ -653,7 +539,7 @@ int main(int argc, char* argv[]){
 	 * Progress bar construction
 	 */
 	if(param.PROGRESS){
-		show_progress = new boost::progress_display( param.UTTERANCES * param.MAX_GENERATIONS +1);
+		show_progress = new boost::progress_display( param.UTTERANCES * param.MAX_GENERATIONS + 1);
 	}
 
 	//Log file Path
@@ -661,20 +547,10 @@ int main(int argc, char* argv[]){
 
 	//Parameter Output
 	{
-		//boost::filesystem::path param_file("Parameters_" + param.DATE_STR + ".prm");
-		//boost::filesystem::ofstream ofs(param.BASE_PATH / param_file);
 		std::string param_file("Parameters_" + param.DATE_STR + ".prm");
 		std::ofstream ofs((param.BASE_PATH + param_file).c_str());
 		ofs << param.to_s() << std::endl;
 	}
-
-	//if (NetWorld::agent_num * param.MAX_GENERATIONS > 1000)
-	//	online_analyze = true;
-
-	//if (param.INTER_ANALYSIS) {
-	//	NetWorld::logging_off();
-	//	param.LOGGING = false;
-	//}
 
 	//main loop
 	while(generation_counter < param.MAX_GENERATIONS){
@@ -687,20 +563,6 @@ int main(int argc, char* argv[]){
 		std::cerr << "Start Generation:" << generation_counter << std::endl;
 #endif
 
-		//if (generation_counter + 1 == param.MAX_GENERATIONS
-		//			&& param.INTER_LOG) {
-		//	NetWorld::logging_on();
-		//	param.LOGGING = true;
-		//} else if (param.INTER_LOG) {
-		//	if (generation_counter % param.SPACE_LOG == 0) {
-		//		NetWorld::logging_on();
-		//		param.LOGGING = true;
-		//	} else {
-		//		NetWorld::logging_off();
-		//		param.LOGGING = false;
-		//	}
-		//}
-
 		if(param.LOGGING){
 			LogBox::push_log("\nGENERATION: "+ boost::lexical_cast<std::string>(generation_counter + Base_Counter));
 			LogBox::push_log("BEFORE TALKING");
@@ -708,6 +570,7 @@ int main(int argc, char* argv[]){
 			LogBox::push_log(parent_agent.to_s());
 			LogBox::push_log("\n-->>EDUCATION");
 		}
+
 #ifdef DEBUG
 		std::cerr << "Say & learn" << std::endl;
 #endif
@@ -737,15 +600,13 @@ int main(int argc, char* argv[]){
 
 
 			if(param.UNIQUE_UTTERANCE)
-				meanings_copy.erase(meanings_copy.begin()+use_meaning_index);
+				meanings_copy.erase(meanings_copy.begin() + use_meaning_index);
 
 			if(param.PROGRESS)
 				++(*show_progress);
 
 			utterance_counter++;
 		}
-
-
 
 		if(param.LOGGING){
 			LogBox::push_log("\n<<--EDUCATION");
@@ -754,7 +615,6 @@ int main(int argc, char* argv[]){
 			LogBox::push_log("\nCHILD KNOWLEDGE");
 			LogBox::push_log(child_agent.to_s());
 		}
-
 
 #ifdef DEBUG
 		std::cerr << "Save State" << std::endl;
@@ -768,7 +628,6 @@ int main(int argc, char* argv[]){
 #endif
 
 		if(param.ANALYZE){
-			//result.push_back(analyze(meaning_space, parent_agent));
 			analyze_and_output(param, meaning_space, individuals,
 					parent_agent, parent_agent);
 			analyze_and_output(param, meaning_space, individuals,
@@ -788,35 +647,31 @@ int main(int argc, char* argv[]){
 		generation_counter++;
 	}
 
-
-
 	//saving proc
 	if(param.SAVE_LAST_STATE){
         std::ofstream ofs((param.BASE_PATH + param.SAVE_FILE).c_str());
-//        boost::filesystem::ofstream ofs(param.BASE_PATH / param.SAVE_FILE);
         switch(param.SAVE_FORMAT){
-        case Parameters::BIN:
-        {
-        	boost::archive::binary_oarchive oa(ofs);
-        	int counter;
-        	counter = Base_Counter + param.MAX_GENERATIONS;
-        	save_agent<boost::archive::binary_oarchive>
-        	(oa, param, MT19937::icount, MT19937::rcount, dic, meaning_space, counter, parent_agent);
-        }
+        	case Parameters::BIN:
+        	{
+        		boost::archive::binary_oarchive oa(ofs);
+        		int counter;
+        		counter = Base_Counter + param.MAX_GENERATIONS;
+        		save_agent<boost::archive::binary_oarchive>(oa, param, MT19937::icount, MT19937::rcount, dic, meaning_space, counter, parent_agent);
+        	}
             break;
 
-        case Parameters::XML:
-        {
-        	boost::archive::xml_oarchive oa(ofs);
-        	int counter;
-        	counter = Base_Counter + param.MAX_GENERATIONS;
-        	save_agent<boost::archive::xml_oarchive>
-        	(oa, param, MT19937::icount, MT19937::rcount, dic, meaning_space, counter, parent_agent);
-        }
+        	case Parameters::XML:
+        	{
+        		boost::archive::xml_oarchive oa(ofs);
+        		int counter;
+        		counter = Base_Counter + param.MAX_GENERATIONS;
+        		save_agent<boost::archive::xml_oarchive>
+        		(oa, param, MT19937::icount, MT19937::rcount, dic, meaning_space, counter, parent_agent);
+        	}
         	break;
 
-        default:
-        	std::cerr << "UNKNOWN FORMAT" << std::endl;
+        	default:
+        		std::cerr << "UNKNOWN FORMAT" << std::endl;
         	return 0;
         }
 
@@ -828,32 +683,30 @@ int main(int argc, char* argv[]){
 		while (a_it != all_generations.end()){
 			std::string index_str;
 			index_str = boost::lexical_cast<std::string>(index+Base_Counter);
-//			boost::filesystem::path stf(param.FILE_PREFIX+"_Gen_"+index_str+".st");
-//			boost::filesystem::ofstream ofs(param.BASE_PATH / stf);
-                        std::string stf((param.FILE_PREFIX+"_Gen_"+index_str+".st").c_str());
-                        std::ofstream ofs((param.BASE_PATH + stf).c_str());
+            std::string stf((param.FILE_PREFIX+"_Gen_"+index_str+".st").c_str());
+            std::ofstream ofs((param.BASE_PATH + stf).c_str());
 
 			switch(param.SAVE_FORMAT){
-			case Parameters::BIN:
-			{
-				boost::archive::binary_oarchive oa(ofs);
-				int counter;
-				counter = Base_Counter + index;
-				save_agent(oa, param, MT19937::icount, MT19937::rcount, dic, meaning_space, counter, *a_it);
-			}
+				case Parameters::BIN:
+				{
+					boost::archive::binary_oarchive oa(ofs);
+					int counter;
+					counter = Base_Counter + index;
+					save_agent(oa, param, MT19937::icount, MT19937::rcount, dic, meaning_space, counter, *a_it);
+				}
 				break;
 
-			case Parameters::XML:
-			{
-				boost::archive::xml_oarchive oa(ofs);
-				int counter;
-				counter = Base_Counter + index;
-				save_agent(oa, param, MT19937::icount, MT19937::rcount, dic, meaning_space, counter, *a_it);
-			}
+				case Parameters::XML:
+				{
+					boost::archive::xml_oarchive oa(ofs);
+					int counter;
+					counter = Base_Counter + index;
+					save_agent(oa, param, MT19937::icount, MT19937::rcount, dic, meaning_space, counter, *a_it);
+				}
 				break;
 
-			default:
-				std::cerr << "UNKNOWN FORMAT" << std::endl;
+				default:
+					std::cerr << "UNKNOWN FORMAT" << std::endl;
 				return 0;
 			}
 
@@ -862,30 +715,7 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	//if(param.ANALYZE){
-	//	boost::filesystem::ofstream ofs(param.BASE_PATH / param.RESULT_FILE);
-	//	std::vector<std::vector<int> >::iterator r_it;
-	//	std::vector<int>::iterator line_it;
-
-	//	ofs << "#Format = Generation Number, Expression Ratio, Sentence Rule Number, Word Rule Number" << std::endl;
-
-	//	r_it = result.begin();
-	//	while(r_it != result.end()){
-	//		line_it = (*r_it).begin();
-	//		while(line_it != (*r_it).end()){
-	//			if(line_it != (*r_it).end()-1)
-	//				ofs << *line_it << ", ";
-	//			else
-	//				ofs << (*line_it) << std::endl;
-	//			line_it++;
-	//		}
-	//		r_it++;
-	//	}
-	//}
-
-//	std::cerr << MT19937::icount << std::endl;
-
-	//delete
+	//destruction
 	delete show_progress;
 	if (param.LOGGING)
 		log.refresh_log();

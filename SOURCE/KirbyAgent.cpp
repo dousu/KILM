@@ -8,18 +8,10 @@
 #include "KirbyAgent.h"
 
 bool KirbyAgent::LOGGING_FLAG = false;
-IndexFactory KirbyAgent::indexer;
-
-bool KirbyAgent::DEL_LONG_RULE = false;
-int KirbyAgent::DEL_LONG_RULE_LENGTH = 0;
-bool KirbyAgent::INDEXER_FLAG = false;
-bool KirbyAgent::UTTER_MINIMUM = false;
-int KirbyAgent::SHORT_MEM_SIZE = 0;
 
 KirbyAgent::KirbyAgent() {
     // TODO Auto-generated constructor stub
     generation_index = 0;
-    serial = indexer.generate();
 }
 
 KirbyAgent::~KirbyAgent() {
@@ -30,7 +22,6 @@ KirbyAgent&
         KirbyAgent::operator=(const KirbyAgent& dst) {
     kb = dst.kb;
     generation_index = dst.generation_index;
-    serial = dst.serial;
     LOGGING_FLAG = dst.LOGGING_FLAG;
     return *this;
 }
@@ -38,20 +29,8 @@ KirbyAgent&
 Rule
 KirbyAgent::say(Rule& internal) {
     try {
-        //return kb.fabricate(internal);
         //return kb.fabricate2(internal);
-        if (INDEXER_FLAG) {
-            if (UTTER_MINIMUM) {
-                return kb.fabricate_idx_min(internal);
-            } else {
-                return kb.fabricate_idx(internal);
-            }
-        } else {
-            if (UTTER_MINIMUM)
-                return kb.fabricate_min_len(internal);
-            else
-                return kb.fabricate(internal);
-        }
+        return kb.fabricate(internal);
     } catch (...) {
         LogBox::refresh_log();
         throw;
@@ -60,13 +39,6 @@ KirbyAgent::say(Rule& internal) {
 
 void
 KirbyAgent::hear(Rule& term) {
-    //短期記憶制限処理
-    if (SHORT_MEM_SIZE != 0) {
-        while (term.external.size() > SHORT_MEM_SIZE) {
-            term.external.pop_back();
-        }
-    }
-
     kb.send_box(term);
 }
 

@@ -29,7 +29,7 @@ namespace ELEM_TYPE {
     //!変数:内部言語の非終端記号
     const int VAR_TYPE = 2;
     //!対象:内部言語の終端記号
-    const int IND_TYPE = 3;
+    const int MEAN_TYPE = 3;
 }
 
 //型

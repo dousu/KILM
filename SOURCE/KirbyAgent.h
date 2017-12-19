@@ -27,7 +27,6 @@ public:
 	//! エージェントが覚えている規則（Rule）が格納されています。
 	KnowledgeBase kb;
 
-	int serial; //future
 	int generation_index; //!<世代数を表します。
 	static bool LOGGING_FLAG;
 	static bool DEL_LONG_RULE;

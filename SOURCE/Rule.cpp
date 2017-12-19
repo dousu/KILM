@@ -346,7 +346,7 @@ int main(int arg, char** argv) {
         cat.push_back(elm);
       }
       break;
-      case ELEM_TYPE::IND_TYPE :
+      case ELEM_TYPE::MEAN_TYPE :
       for(unsigned int i=0;i<Element::dic.individual.size();i++) {
         elm.set_ind(i);
         ind.push_back(elm);
