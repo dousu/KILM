@@ -114,6 +114,7 @@ ipch/
 *.vcxproj
 *.vcxproj.*
 *.vscode/
+*.code-workspace
 
 # Guidance Automation Toolkit
 *.gpState

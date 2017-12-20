@@ -1,7 +1,7 @@
 /*
  * kirby_main.h
  *
- *  Created on: 2012/06/23
+ *  Created on: 2012/12/23
  *      Author: rindou
  */
 

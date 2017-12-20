@@ -1,7 +1,7 @@
 /*
  * LogBox.cpp
  *
- *  Created on: 2012/06/18
+ *  Created on: 2012/12/18
  *      Author: Hiroki Sudo
  */
 

@@ -1,7 +1,7 @@
 /*
  * Rule.h
  *
- *  Created on: 2012/05/18
+ *  Created on: 2012/11/18
  *      Author: Hiroki Sudo
  */
 

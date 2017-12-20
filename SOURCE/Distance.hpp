@@ -1,7 +1,7 @@
 /*!
  * Distance.h
  *
- *  Created on: 2012/06/29
+ *  Created on: 2012/12/29
  *  \author Hiroki Sudo
  *
  */

@@ -1,7 +1,7 @@
 /*
  * Dictionary.h
  *
- *  Created on: 2012/05/23
+ *  Created on: 2012/11/23
  *      Author: Hiroki Sudo
  */
 
