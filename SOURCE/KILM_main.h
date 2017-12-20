@@ -35,7 +35,6 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 
-
 #include "KirbyAgent.h"
 #include "Rule.h"
 #include "Element.h"

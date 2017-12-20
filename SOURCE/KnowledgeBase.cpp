@@ -13,10 +13,6 @@ uint32_t KnowledgeBase::CONTROLS = 0x00L;
 int KnowledgeBase::buzz_length = 3;
 
 bool KnowledgeBase::OMISSION_FLAG = false;
-bool KnowledgeBase::OMISSION_A = false;
-bool KnowledgeBase::OMISSION_B = false;
-bool KnowledgeBase::OMISSION_C = false;
-bool KnowledgeBase::OMISSION_D = false;
 std::vector<Rule> KnowledgeBase::MEANING_SPACE;
 
 KnowledgeBase::KnowledgeBase() {
