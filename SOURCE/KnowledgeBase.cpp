@@ -860,11 +860,6 @@ KnowledgeBase::replacing(Rule& word, RuleDBType& checking_sents) {
     return total_match;
 }
 
-void
-KnowledgeBase::prohibited(KnowledgeBase::PatternType rules) {
-    exception.push_back(rules);
-}
-
 bool
 KnowledgeBase::obliterate(void) {
     std::vector<Rule>::iterator it1, it2;
@@ -964,10 +959,6 @@ KnowledgeBase::build_word_index(void) {
             temp.insert(ItemType::value_type((*it).internal.front().obj, *it));
             word_dic.insert(std::map<int, ItemType>::value_type((*it).cat, temp));
         }
-
-        normal_word_dic.insert(
-                std::multimap<Element, Rule>::value_type((*it).internal.front(),
-                (*it)));
 
         it++;
     }
@@ -1176,7 +1167,7 @@ KnowledgeBase::fabricate(Rule& src1) {
 }
 
 Rule
-KnowledgeBase::pseudofabricate(Rule& src1) {
+KnowledgeBase::fabricate_for_complementing(Rule& src1) {
 
     std::vector<PatternType> groundable_patterns;
     std::map<PATTERN_TYPE, std::vector<PatternType> > all_patterns, all_patterns2;
@@ -3639,7 +3630,6 @@ KnowledgeBase::utterances(void) {
 
 bool
 KnowledgeBase::clipping(Rule& mean, KnowledgeBase::PatternType& ptn, KnowledgeBase::PatternType& res) {
-//    std::cerr << "HHHHHHHHHHHH" << std::endl;
     KnowledgeBase::PatternType src;
     Rule new_rule, tmp_rule, base_rule;
     bool changed = false, clipped, replaceable, sym_flag;
@@ -3660,7 +3650,6 @@ KnowledgeBase::clipping(Rule& mean, KnowledgeBase::PatternType& ptn, KnowledgeBa
 
             ptn_index = count + 1;
             if (src[ptn_index].external.size() > 1) {
-//                std::cerr << "JJJJJJJJJJJ" << std::endl;
                 clipped = false;
                 new_rule = src[ptn_index];
                 base_rule = src[ptn_index];
@@ -3727,7 +3716,6 @@ KnowledgeBase::clipping(Rule& mean, KnowledgeBase::PatternType& ptn, KnowledgeBa
             }
         }
     }
-//std::cerr << "IIIIIIII" << std::endl;
     //文の省略
     term_strings = recognize_terminal_strings(src[0]);
     term_strings_it = term_strings.begin();

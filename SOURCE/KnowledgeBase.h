@@ -74,7 +74,7 @@ class KnowledgeBase : public KnowledgeBaseTypeDef, public RuleTypeDef {
 public:
 
     enum PATTERN_TYPE {
-        ABSOLUTE, COMPLETE, SEMICOMPLETE, RANDOM, SORTED_ALL
+        ABSOLUTE, COMPLETE, SEMICOMPLETE
     };
 
     IndexFactory cat_indexer;
@@ -82,7 +82,6 @@ public:
     RuleDBType sentence_box;
     RuleDBType word_box;
     DicDBType word_dic;
-    NormalDicType normal_word_dic;
 
     RuleDBType sentenceDB;
     RuleDBType wordDB;
@@ -92,12 +91,11 @@ public:
     static int ABSENT_LIMIT;
     static uint32_t CONTROLS;
     static int buzz_length;
-    std::vector<KnowledgeBase::PatternType> exception;
 
     static const uint32_t USE_OBLITERATION = 0x01;
     static const uint32_t USE_SEMICOMPLETE_FABRICATION = 0x02;
-    static const uint32_t USE_ADDITION_OF_RANDOM_WORD = 0x03;
-    static const uint32_t ANTECEDE_COMPOSITION = 0x04;
+    static const uint32_t USE_ADDITION_OF_RANDOM_WORD = 0x04;
+    static const uint32_t ANTECEDE_COMPOSITION = 0x08;
 
     static bool OMISSION_FLAG;
 
@@ -135,12 +133,6 @@ public:
     replace(void); //リプレイス
 
     /*!
-     指定されたruleの組み合わせでcompositional ruleを生成しないようにします．
-     */
-    void
-    prohibited(KnowledgeBase::PatternType rules);
-
-    /*!
      * 例外ルールである、単語削除を行います。
      * これは、単語規則について、内部言語が等しいものに対し、外部言語が最も短いものを残し、
      * その他を削除するルールです。
@@ -160,14 +152,15 @@ public:
      */
     Rule
     fabricate(Rule& src1);
-    Rule
-    fabricate_min_len(Rule& src1);
-    Rule
-    fabricate_idx_min(Rule& src);
-    Rule
-    fabricate_idx(Rule& src);
-    Rule
-    pseudofabricate(Rule& src1);
+    /*!
+     * Ruleを受け取り、その内部言語列に対応する外部言語列を生成し、
+     * その外部言語列をRuleに代入して返します。なお生成ルールは以下のようになります。
+     * 正確な発話ができない場合の補完用
+     * -# 合成度の高いルールで、内部言語1要素だけが適合しない場合、その1要素についてランダムの文字列を当てて外部言語列を生成する
+     * .
+     *
+     */Rule
+    fabricate_for_complementing(Rule& src1);
 
     /*!
      * 渡されたRuleの内部言語から完全に外部言語列を構成可能かどうかを返す。

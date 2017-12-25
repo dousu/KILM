@@ -49,7 +49,7 @@ public:
 	 * 引数に取った規則の内部言語に対して、外部言語が純粋に構成可能なとき、
 	 * trueを返します。
 	 */
-	bool understand(Rule& internal);
+	bool utterable(Rule& internal);
 
 	/*!
 	 * 自分の子エージェントを生成します。

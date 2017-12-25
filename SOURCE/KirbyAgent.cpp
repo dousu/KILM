@@ -48,10 +48,7 @@ KirbyAgent::learn(void) {
 }
 
 bool
-KirbyAgent::understand(Rule& internal) {
-//    kb.DIC_BLD = false;
-//    kb.word_dic.clear();
-//    kb.build_word_index();
+KirbyAgent::utterable(Rule& internal) {
     return kb.acceptable(internal);
 }
 
