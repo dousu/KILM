@@ -6,7 +6,7 @@ OBJ = KirbyAgent.o KnowledgeBase.o Rule.o Element.o Dictionary.o IndexFactory.o 
 OBJS = $(addprefix ${SOURCEDIR}/, $(OBJ))
 HD = Distance.hpp
 HDS = $(addprefix ${SOURCEDIR}/, $(HD))
-OPT = -g -O2
+OPT = --std=c++14 -O2
 
 ki: ${OBJS}
 	${CXX} ${OPT} ${SOURCEDIR}/KILM_main.cpp ${OBJS} ${HDS} ${LD} ${LIBS} -o ${SOURCEDIR}/kilm.exe
@@ -28,4 +28,4 @@ MT19937.o:MT19937.h
 Parameters.o:Parameters.h
 
 clean:
-	rm -f *.o *.dump *.exe *.log
+	rm -f ${SOURCEDIR}/*.o ${SOURCEDIR}/*.dump ${SOURCEDIR}/*.exe ${SOURCEDIR}/*.log

@@ -13,6 +13,7 @@
 #include <ctime>
 #include <climits>
 #include <algorithm>
+#include <map>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -236,7 +237,7 @@ public:
     natural_construct_grounding_patterns(Rule& src);
 
     void
-    graund_with_pattern(Rule& src, PatternType& pattern);
+    ground_with_pattern(Rule& src, PatternType& pattern);
     std::vector<Rule>
     groundable_rules(Rule& src);
     std::vector<Rule>

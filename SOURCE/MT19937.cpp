@@ -30,7 +30,7 @@ boost::variate_generator<boost::mt19937, boost::uniform_real<double> > MT19937::
 
 
 int MT19937::irand(void){
-	   if(icount < ULONG_LONG_MAX -1)
+	   if(icount < ULLONG_MAX -1)
 		   icount++;
 	   else
 		   throw "cannot use random any more";
@@ -39,7 +39,7 @@ int MT19937::irand(void){
 }
 
 double MT19937::rrand(void){
-	   if(rcount < ULONG_LONG_MAX -1)
+	   if(rcount < ULLONG_MAX -1)
 		   rcount++;
 	   else
 		   throw "cannot use random any more";

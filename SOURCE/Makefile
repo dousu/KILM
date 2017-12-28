@@ -1,15 +1,16 @@
 OUTPUT = a.out
 LD = -L/usr/local/lib
-LIBS = -lboost_serialization -lboost_thread -lboost_system -lboost_program_options
+LIBS = -lboost_serialization -lboost_program_options
 OBJ = KirbyAgent.o KnowledgeBase.o Rule.o Element.o Dictionary.o IndexFactory.o Prefices.o LogBox.o Parameters.o MT19937.o
 HD = Distance.hpp
-OPT = -g -O2
+OPT = --std=c++14 -g -O2
+CXX = g++
 
 ki: ${OBJ}
 	${CXX} ${OPT} KILM_main.cpp ${OBJ} ${HD} ${LD} ${LIBS} -o kilm.exe
 
 .cpp.o:
-	${CXX} ${OPT} -c $< ${ID} ${LD} ${LIBS2}
+	${CXX} ${OPT} -c $< ${ID} ${LD} ${LIBS}
 
 KILM_main.cpp: KirbyAgent.o LogBox.o Parameters.o MT19937.o
 KirbyAgent.o: KnowledgeBase.o LogBox.o KirbyAgent.h
