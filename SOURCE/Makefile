@@ -1,4 +1,3 @@
-OUTPUT = a.out
 LD = -L/usr/local/lib
 LIBS = -lboost_serialization -lboost_program_options
 OBJ = KirbyAgent.o KnowledgeBase.o Rule.o Element.o Dictionary.o IndexFactory.o Prefices.o LogBox.o Parameters.o MT19937.o
@@ -7,10 +6,10 @@ OPT = --std=c++14 -g -O2
 CXX = g++
 
 ki: ${OBJ}
-	${CXX} ${OPT} KILM_main.cpp ${OBJ} ${HD} ${LD} ${LIBS} -o kilm.exe
+	${CXX} ${OPT} KILM_main.cpp ${OBJ} ${LD} ${LIBS} -o kilm.exe
 
 .cpp.o:
-	${CXX} ${OPT} -c $< ${ID} ${LD} ${LIBS}
+	${CXX} ${OPT} -c $<
 
 KILM_main.cpp: KirbyAgent.o LogBox.o Parameters.o MT19937.o
 KirbyAgent.o: KnowledgeBase.o LogBox.o KirbyAgent.h
