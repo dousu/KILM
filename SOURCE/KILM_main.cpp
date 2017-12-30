@@ -147,7 +147,7 @@ int expression(std::vector<Rule>& meanings, KirbyAgent& agent){
 	int counter = 0;
 	mean_it = meanings.begin();
 	while(mean_it != meanings.end()){
-		if(agent.understand(*mean_it))
+		if(agent.utterable(*mean_it))
 			counter++;
 		mean_it++;
 	}
