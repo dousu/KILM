@@ -483,16 +483,6 @@ int main(int argc, char* argv[]){
 		 */
 		construct_meanings(meaning_space);
 		construct_individuals(individuals, dic);
-
-		if(param.LOGGING){
-			std::vector<Rule>::iterator mean_it;
-			mean_it = meaning_space.begin();
-			LogBox::push_log("USEING MEANINGS");
-			for(; mean_it != meaning_space.end(); mean_it++){
-				LogBox::push_log((*mean_it).to_s());
-			}
-			LogBox::push_log("\n");
-		}
 	}
 
 	if(param.LOGGING)
