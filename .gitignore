@@ -115,6 +115,7 @@ ipch/
 *.vcxproj.*
 *.vscode/
 *.code-workspace
+KILM/*
 
 # Guidance Automation Toolkit
 *.gpState
