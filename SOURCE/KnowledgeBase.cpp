@@ -1311,11 +1311,6 @@ KnowledgeBase::construct_grounding_patterns(Rule& src) {
     std::vector<PatternType>::iterator patternDB_it;
     //初期パターン
     PatternType pattern;
-    //  exception検知用
-    //  std::vector<std::vector<Rule> > exceptionDB;
-    //  std::vector<std::vector<Rule> >::iterator exceptionDB_it;
-    //  std::vector<Rule>::iterator exceptionP_it;
-    //  bool exp_flag;
 
     sent_it = sentenceDB.begin();
     while (sent_it != sentenceDB.end()) {
@@ -1343,15 +1338,6 @@ KnowledgeBase::construct_grounding_patterns(Rule& src) {
             continue;
         }
 
-        //    文ルールがマッチするexceptionだけをexceptionDBに格納
-        //    exceptionDB_it=exception.begin();
-        //    for(; exceptionDB_it!=exception.end(); exceptionDB_it++){
-        //        exp_flag=((*exceptionDB_it)[0]==(*sent_it));
-        //        
-        //        if(exp_flag){
-        //            exceptionDB.push_back((*exceptionDB_it));
-        //        }
-        //    }
 
         //グラウンドパターンの格納庫とそのイテレータ
         patternDB.clear();
@@ -1527,11 +1513,6 @@ KnowledgeBase::natural_construct_grounding_patterns(Rule& src) {
     std::vector<PatternType>::iterator patternDB_it;
     //初期パターン
     PatternType pattern;
-    //  exception検知用
-    //  std::vector<std::vector<Rule> > exceptionDB;
-    //  std::vector<std::vector<Rule> >::iterator exceptionDB_it;
-    //  std::vector<Rule>::iterator exceptionP_it;
-    //  bool exp_flag;
 
     sent_it = sentenceDB.begin();
     while (sent_it != sentenceDB.end()) {
@@ -1559,15 +1540,6 @@ KnowledgeBase::natural_construct_grounding_patterns(Rule& src) {
             continue;
         }
 
-        //    文ルールがマッチするexceptionだけをexceptionDBに格納
-        //    exceptionDB_it=exception.begin();
-        //    for(; exceptionDB_it!=exception.end(); exceptionDB_it++){
-        //        exp_flag=((*exceptionDB_it)[0]==(*sent_it));
-        //        
-        //        if(exp_flag){
-        //            exceptionDB.push_back((*exceptionDB_it));
-        //        }
-        //    }
 
         //グラウンドパターンの格納庫とそのイテレータ
         patternDB.clear();
@@ -1791,8 +1763,6 @@ KnowledgeBase::grounded_rules(Rule src) {
     std::map<PATTERN_TYPE, std::vector<PatternType> > patterns, patterns2;
 
     patterns = construct_grounding_patterns(src);
-    patterns2 = natural_construct_grounding_patterns(src);
-    exception_filter(patterns, patterns2);
 
     if (patterns[ABSOLUTE].size() == 0 && patterns[COMPLETE].size() == 0)
         return grounded_rules;
@@ -1829,8 +1799,6 @@ KnowledgeBase::grounded_rules2(Rule src, std::vector<KnowledgeBase::PatternType>
     std::vector<PatternType>::iterator nat_it;
 
     patterns = construct_grounding_patterns(src);
-    natural_patterns = natural_construct_grounding_patterns(src);
-    exception_filter(patterns, natural_patterns);
 
     if (patterns[ABSOLUTE].size() == 0 && patterns[COMPLETE].size() == 0)
         return grounded_rules;

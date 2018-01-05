@@ -244,10 +244,6 @@ public:
     grounded_rules(Rule src);
     std::vector<Rule>
     grounded_rules2(Rule src, std::vector<KnowledgeBase::PatternType>& all_patterns);
-    void
-    indexer(std::vector<Rule>& meanings);
-    void
-    exception_filter(std::map<PATTERN_TYPE, std::vector<PatternType> >& target_all_patterns, std::map<PATTERN_TYPE, std::vector<PatternType> >& base_all_patterns);
     bool
     clipping(Rule& mean, KnowledgeBase::PatternType& ptn, KnowledgeBase::PatternType& res);
     std::vector<Rule>

@@ -34,7 +34,7 @@ Parameters::Parameters() {
   RESULT_EXT = ".rst";
   LOG_EXT = ".log";
 
-  BASE_PATH = "./";
+  BASE_PATH = "../RESULT/";
   SAVE_FILE = (FILE_PREFIX + DATE_STR + STATE_EXT);
   RESULT_FILE = (FILE_PREFIX + DATE_STR + RESULT_EXT);
   RESUME_FILE = (FILE_PREFIX + DATE_STR + STATE_EXT);
@@ -63,10 +63,10 @@ Parameters::set_option(boost::program_options::variables_map& vm) {
   if (vm.count("prefix")) {
     FILE_PREFIX = vm["prefix"].as<std::string>();
 
-    SAVE_FILE = (FILE_PREFIX + DATE_STR + ".st");
-    RESULT_FILE = (FILE_PREFIX + DATE_STR + ".rs");
-    RESUME_FILE = (FILE_PREFIX + DATE_STR + ".st");
-    LOG_FILE = (FILE_PREFIX + DATE_STR + ".log");
+    SAVE_FILE = (FILE_PREFIX + DATE_STR + STATE_EXT);
+    RESULT_FILE = (FILE_PREFIX + DATE_STR + RESULT_EXT);
+    RESUME_FILE = (FILE_PREFIX + DATE_STR + STATE_EXT);
+    LOG_FILE = (FILE_PREFIX + DATE_STR + LOG_EXT);
   }
 
   if (vm.count("path")) {

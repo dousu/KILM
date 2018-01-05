@@ -351,7 +351,7 @@ int main(int argc, char* argv[]){
 			/*BASE PATH*/
 					("path",
 					boost::program_options::value<std::string>(),
-					"Set folder for output files (\"./\")")
+					"Set folder for output files (\"../RESULT/\")")
 			/*再開*/
 					("resume",
 					boost::program_options::value<std::vector<std::string> >(),
