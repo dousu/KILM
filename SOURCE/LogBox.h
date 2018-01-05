@@ -17,33 +17,6 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 
-//#include "LEILAParameters.h"
-/*
-class LogWriter {
-  public:
-    typedef std::vector<std::string> LogT;
-
-    LogWriter();
-    LogWriter(std::string);
-    virtual ~LogWriter();
-
-    void
-    operator()();
-
-    void
-    stop(void);
-    void
-    set_log(LogT new_log);
-
-  private:
-    boost::condition_variable_any log_cond;
-    boost::mutex log_mutex;
-    std::string file_name;
-    LogT log;
-    bool exit_rq;
-};
-*/
-
 /*!
  * ロギングデータを保持するクラス
  * 特に意識する必要なし。

@@ -81,7 +81,6 @@ private:
     void serialize(Archive &ar, const unsigned int /* file_version */){
     	ar & BOOST_SERIALIZATION_NVP(kb);
     	ar & BOOST_SERIALIZATION_NVP(generation_index);
-    	ar & BOOST_SERIALIZATION_NVP(LOGGING_FLAG);
     }
 
 };

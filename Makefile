@@ -1,5 +1,5 @@
 LD = -L/usr/local/lib
-LIBS = -lboost_serialization -lboost_thread -lboost_system -lboost_program_options
+LIBS = -lboost_serialization -lboost_system -lboost_program_options
 SOURCEDIR = ./SOURCE
 OBJ = KirbyAgent.o KnowledgeBase.o Rule.o Element.o Dictionary.o IndexFactory.o Prefices.o LogBox.o Parameters.o MT19937.o
 OBJS = $(addprefix ${SOURCEDIR}/, $(OBJ))

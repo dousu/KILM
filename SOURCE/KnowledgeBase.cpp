@@ -2316,7 +2316,7 @@ int main(int arg, char **argv) {
     Rule input1, input2;
     try {
         //kb2.set_seed(11111111);
-        MT19937::irand.engine().seed(11111111);
+        MT19937::set_seed(11111111);
         input1 = Rule(std::string("S hoge hoge hoge -> d"));
     } catch (const char* msg) {
         std::cout << "ERR:" << msg << std::endl;

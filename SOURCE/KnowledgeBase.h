@@ -300,9 +300,6 @@ private:
          */
 
         /*Staticをシリアライズすると何が起こるんだろうか*/
-        ar & BOOST_SERIALIZATION_NVP(LOGGING_FLAG);
-        ar & BOOST_SERIALIZATION_NVP(ABSENT_LIMIT);
-        ar & BOOST_SERIALIZATION_NVP(CONTROLS);
         ar & BOOST_SERIALIZATION_NVP(buzz_length);
     }
 };

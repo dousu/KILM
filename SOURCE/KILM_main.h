@@ -34,6 +34,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/export.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "KirbyAgent.h"
 #include "Rule.h"

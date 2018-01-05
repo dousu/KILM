@@ -1,5 +1,5 @@
 LD = -L/usr/local/lib
-LIBS = -lboost_serialization -lboost_program_options
+LIBS = -lboost_serialization -lboost_program_options -lboost_system
 OBJ = KirbyAgent.o KnowledgeBase.o Rule.o Element.o Dictionary.o IndexFactory.o Prefices.o LogBox.o Parameters.o MT19937.o
 HD = Distance.hpp
 OPT = --std=c++14 -g -O2

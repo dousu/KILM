@@ -11,7 +11,7 @@ bool KirbyAgent::LOGGING_FLAG = false;
 
 KirbyAgent::KirbyAgent() {
     // TODO Auto-generated constructor stub
-    generation_index = 0;
+    generation_index = 1;
 }
 
 KirbyAgent::~KirbyAgent() {

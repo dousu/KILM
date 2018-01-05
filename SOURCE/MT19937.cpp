@@ -47,17 +47,19 @@ double MT19937::rrand(void){
 }
 
 void MT19937::waste(void){
-	   unsigned long long int i = 0LL;
-	   while (i < icount){
-		   _irand();
-		   i++;
-	   }
+	//    unsigned long long int i = 0LL;
+	//    while (i < icount){
+	// 	   _irand();
+	// 	   i++;
+	//    }
 
-	   i=0;
-	   while(i < rcount){
-		   _rrand();
-		   i++;
-	   }
+	//    i=0;
+	//    while(i < rcount){
+	// 	   _rrand();
+	// 	   i++;
+	//    }
+	_irand.engine().discard(icount);
+	_rrand.engine().discard(rcount);
 }
 
 void MT19937::set_seed(uint32_t seed_value){

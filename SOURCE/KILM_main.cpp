@@ -172,7 +172,7 @@ void analyze_and_output(Parameters& param, std::vector<Rule> meaning_space,
 
 	index = agent1.generation_index;
 	index_str = boost::lexical_cast<std::string>(index);
-	file = param.FILE_PREFIX + "_" + param.DATE_STR + "_" + index_str + ".rst";
+	file = param.FILE_PREFIX + param.DATE_STR + "_" + index_str + ".rst";
 
 	res = analyze(meaning_space, agent1, agent2);
 
@@ -470,25 +470,17 @@ int main(int argc, char* argv[]){
 					default:
 					return 0;
 				}
-
-				MT19937::set_seed(param.RANDOM_SEED);
-				MT19937::waste();
 		}catch(...){
 			std::cerr << "State file Error" << std::endl;
 			return 0;
 		}
 	}else{
-
-		/*
-		 * Meaning Space
-		 */
-		MT19937::set_seed(param.RANDOM_SEED);
-        KnowledgeBase::set_control(KnowledgeBase::ANTECEDE_COMPOSITION | param.CONTROLS);
-
-
 		//initialize
 		dic.load(param.DICTIONARY_FILE);
 		
+		/*
+		 * Meaning Space
+		 */
 		construct_meanings(meaning_space);
 		construct_individuals(individuals, dic);
 
@@ -516,7 +508,7 @@ int main(int argc, char* argv[]){
 		std::vector<Rule>::iterator mean_it;
 
 		LogBox::push_log("USED RANDOM SEED");
-		//LogBox::push_log(boost::lexical_cast<std:string>(MT19937::_irand.engine().seed()));
+		LogBox::push_log(boost::lexical_cast<std::string>(param.RANDOM_SEED));
 
 		mean_it = meaning_space.begin();
 		LogBox::push_log("USEING MEANINGS");
@@ -525,6 +517,10 @@ int main(int argc, char* argv[]){
 		}
 		LogBox::push_log("\n");
 	}
+
+	KnowledgeBase::set_control(KnowledgeBase::ANTECEDE_COMPOSITION | param.CONTROLS);
+	MT19937::set_seed(param.RANDOM_SEED);
+	MT19937::waste();
 
 	/*
 	 * Utterance times
