@@ -14,7 +14,7 @@ $(SOURCEDIR)/%.o: %.cpp
 	@[ -d $(SOURCEDIR/) ]
 	${CXX} ${OPT} ${LD} ${LIBS} -o $@ -c $<
 
-KILM_main.cpp: KirbyAgent.o LogBox.o Parameters.o MT19937.o
+KILM_main.cpp: KirbyAgent.o Rule.o Element.o LogBox.o Parameters.o MT19937.o ${HDS} KILM_main.h
 KirbyAgent.o: KnowledgeBase.o LogBox.o KirbyAgent.h
 KnowledgeBase.o: ${HDS} Rule.o IndexFactory.o Prefices.o LogBox.o KnowledgeBase.h
 Rule.o: Element.o Dictionary.o IndexFactory.o Prefices.o Rule.h
@@ -24,7 +24,7 @@ IndexFactory.o:IndexFactory.h
 Prefices.o:Prefices.h
 LogBox.o:LogBox.h
 MT19937.o:MT19937.h
-Parameters.o:Parameters.h
+Parameters.o:KnowledgeBase.o Parameters.h
 
 clean:
 	rm -f ${SOURCEDIR}/*.o ${SOURCEDIR}/*.dump ${SOURCEDIR}/*.exe ${SOURCEDIR}/*.log
