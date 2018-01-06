@@ -1490,207 +1490,207 @@ KnowledgeBase::construct_grounding_patterns(Rule& src) {
     return ret;
 }
 
-std::map<KnowledgeBase::PATTERN_TYPE, std::vector<KnowledgeBase::PatternType> >
-KnowledgeBase::natural_construct_grounding_patterns(Rule& src) {
-    typedef std::pair<std::multimap<int, Rule>::iterator,
-            std::multimap<int, Rule>::iterator> DictionaryRange;
-
-    /*
-     * Srcに対して、それぞれの文規則がグラウンド可能か検査する
-     * グラウンディング可能な場合、そのグラウンディングに使用する
-     * 単語規則とその文規則の組の全パターンを集める
-     */
-    //build_word_index();
-
-    //SentenceDBシーケンス用
-    RuleDBType::iterator sent_it;
-    bool filted;
-    int ungrounded_variable_num;
-    bool is_applied, is_absorute, is_complete, is_semicomplete;
-    std::map<PATTERN_TYPE, std::vector<KnowledgeBase::PatternType> > ret;
-    //グラウンドパターンの格納庫とそのイテレータ
-    std::vector<PatternType> patternDB;
-    std::vector<PatternType>::iterator patternDB_it;
-    //初期パターン
-    PatternType pattern;
-
-    sent_it = sentenceDB.begin();
-    while (sent_it != sentenceDB.end()) {
-
-        ungrounded_variable_num = 0;
-
-        //拡張用:内部言語列長の同一性検査
-        // 将来的に内部言語列長が異なるものがデータベースに入るかも知れないので
-        if ((*sent_it).internal.size() != src.internal.size()) {
-            sent_it++;
-            continue;
-        }
-
-        //高速化枝狩り
-        //対象が1カ所でも一致していないものは使えない
-        filted = true;
-        for (int index = 0; index < src.internal.size() && filted; index++) {
-            if ((*sent_it).internal[index].is_ind()
-                    && src.internal[index] != (*sent_it).internal[index]) {
-                filted = false;
-            }
-        }
-        if (!filted) {
-            sent_it++;
-            continue;
-        }
-
-
-        //グラウンドパターンの格納庫とそのイテレータ
-        patternDB.clear();
-
-        //初期パターン
-        pattern.clear();
-
-        //始めに検索対象文規則をパターン格納庫に入れる
-        pattern.push_back(*sent_it);
-        patternDB.push_back(pattern);
-
-        //ある単語規則に対するグラウンドパターン検索
-        Element grnd_elm, mean_elm;
-
-        is_applied = is_absorute = is_complete = is_semicomplete = true;
-        for (int in_idx = 0; is_applied && in_idx < (*sent_it).internal.size();
-                in_idx++) {
-            grnd_elm = (*sent_it).internal[in_idx]; //検査するインターナル要素
-            mean_elm = src.internal[in_idx]; //基準のインターナル要素
-
-            if (grnd_elm == mean_elm) { //単語がそのまま一致する場合
-                is_absorute &= true;
-                continue;
-            } else if (//変数の場合で、グラウンド可能な場合
-                    grnd_elm.is_var() && //変数で
-                    word_dic.find(grnd_elm.cat) != word_dic.end() && //変数のカテゴリが辞書に有り
-                    word_dic[grnd_elm.cat].find(mean_elm.obj)
-                    != word_dic[grnd_elm.cat].end() //辞書の指定カテゴリに単語がある
-                    ) {
-                DictionaryRange item_range;
-                std::vector<PatternType> patternDB_buffer;
-
-                //変数に適用可能単語規則集合取得
-                item_range = word_dic[grnd_elm.cat].equal_range(mean_elm.obj);
-
-                //すでに作られてる単語組に対し組み合わせの直積の生成
-                patternDB_it = patternDB.begin();
-                while (patternDB_it != patternDB.end()) {
-                    //検索した適用可能な単語規則列
-                    while (item_range.first != item_range.second) {
-                        Rule word_item;
-                        PatternType sub_pattern;
-
-                        //取得した単語規則をコピーして
-                        word_item = (*(item_range.first)).second;
-
-                        //変数用の単語規則をinternalに書き込み
-                        //            word_item.internal.front().set_var(in_idx, grnd_elm.cat);
-
-                        //すでに作られてる単語規則の組をコピー
-                        sub_pattern = *patternDB_it;
-                        //そこへ新しく単語規則を追加
-                        sub_pattern.push_back(word_item);
-
-                        //新しく単語規則が追加された単語規則組を新しく保存
-                        patternDB_buffer.push_back(sub_pattern);
-
-                        //適用可能単語規則列の最後まで繰り返す
-                        item_range.first++;
-                    }
-                    //単語規則組が無くなるまで繰り返す
-                    patternDB_it++;
-                }
-                //変更された単語規則組の列で元の単語規則組の列を置き換える
-                patternDB.swap(patternDB_buffer);
-
-                is_complete &= true;
-                is_absorute &= false;
-            } else { //適合不可能文規則
-                ungrounded_variable_num++;
-
-                if (ungrounded_variable_num > ABSENT_LIMIT) {
-                    is_applied &= false;
-                } else {
-                    if (grnd_elm.is_var()) {
-                        std::vector<PatternType> patternDB_buffer;
-
-                        //すでに作られてる単語組に対し組み合わせの直積の生成
-                        patternDB_it = patternDB.begin();
-                        while (patternDB_it != patternDB.end()) {
-                            //検索した適用可能な単語規則列
-                            PatternType sub_pattern;
-                            Rule empty_word;
-                            ExType empty_ex;
-
-                            //空の単語規則を作る
-                            //              empty_word.set_noun(grnd_elm.cat, grnd_elm, empty_ex);
-
-                            //すでに作られてる単語規則の組をコピー
-                            sub_pattern = *patternDB_it;
-
-                            //そこへ新しく単語規則を追加
-                            sub_pattern.push_back(empty_word);
-
-                            //新しく単語規則が追加された単語規則組を新しく保存
-                            patternDB_buffer.push_back(sub_pattern);
-
-                            //単語規則組が無くなるまで繰り返す
-                            patternDB_it++;
-                        }
-                        //変更された単語規則組の列で元の単語規則組の列を置き換える
-                        patternDB.swap(patternDB_buffer);
-                    } else {
-                        std::cerr << "pattern error" << std::endl;
-                        throw;
-                    }
-
-                    is_absorute &= false;
-                    is_complete &= false;
-                    is_semicomplete &= true;
-                }
-            }
-        } //内部言語のグラウンドループ
-
-        //ある文規則に対して取得できたグラウンドパターンを保存
-        if (is_applied) {
-            if (is_absorute) {
-                ret[ABSOLUTE].insert(ret[ABSOLUTE].end(), patternDB.begin(),
-                        patternDB.end());
-            } else if (is_complete) {
-                ret[COMPLETE].insert(ret[COMPLETE].end(), patternDB.begin(),
-                        patternDB.end());
-            } else if (is_semicomplete) {
-                ret[SEMICOMPLETE].insert(ret[SEMICOMPLETE].end(), patternDB.begin(),
-                        patternDB.end());
-            }
-        }
-
-        //次の文規則を検査
-        sent_it++;
-    } //文規則のループ
-
-    //生成パターンの分類
-    //	g_it = g_pattern.begin();
-    //	for(; g_it != g_pattern.end(); g_it++){
-    //		if((*g_it).front().composition() == 0){
-    //			a_pattern.push_back(*g_it);
-    //		}
-    //		if((*g_it).front().composition()+1 == (*g_it).size()){
-    //			c_pattern.push_back(*g_it);
-    //		}
-    //		else{
-    //			s_pattern.push_back(*g_it);
-    //		}
-    //	}
-    //
-    //	ret[ABSOLUTE] = a_pattern;
-    //	ret[COMPLETE] = c_pattern;
-    //	ret[SEMICOMPLETE] = s_pattern;
-    return ret;
-}
+//std::map<KnowledgeBase::PATTERN_TYPE, std::vector<KnowledgeBase::PatternType> >
+//KnowledgeBase::natural_construct_grounding_patterns(Rule& src) {
+//    typedef std::pair<std::multimap<int, Rule>::iterator,
+//            std::multimap<int, Rule>::iterator> DictionaryRange;
+//
+//    /*
+//     * Srcに対して、それぞれの文規則がグラウンド可能か検査する
+//     * グラウンディング可能な場合、そのグラウンディングに使用する
+//     * 単語規則とその文規則の組の全パターンを集める
+//     */
+//    //build_word_index();
+//
+//    //SentenceDBシーケンス用
+//    RuleDBType::iterator sent_it;
+//    bool filted;
+//    int ungrounded_variable_num;
+//    bool is_applied, is_absorute, is_complete, is_semicomplete;
+//    std::map<PATTERN_TYPE, std::vector<KnowledgeBase::PatternType> > ret;
+//    //グラウンドパターンの格納庫とそのイテレータ
+//    std::vector<PatternType> patternDB;
+//    std::vector<PatternType>::iterator patternDB_it;
+//    //初期パターン
+//    PatternType pattern;
+//
+//    sent_it = sentenceDB.begin();
+//    while (sent_it != sentenceDB.end()) {
+//
+//        ungrounded_variable_num = 0;
+//
+//        //拡張用:内部言語列長の同一性検査
+//        // 将来的に内部言語列長が異なるものがデータベースに入るかも知れないので
+//        if ((*sent_it).internal.size() != src.internal.size()) {
+//            sent_it++;
+//            continue;
+//        }
+//
+//        //高速化枝狩り
+//        //対象が1カ所でも一致していないものは使えない
+//        filted = true;
+//        for (int index = 0; index < src.internal.size() && filted; index++) {
+//            if ((*sent_it).internal[index].is_ind()
+//                    && src.internal[index] != (*sent_it).internal[index]) {
+//                filted = false;
+//            }
+//        }
+//        if (!filted) {
+//            sent_it++;
+//            continue;
+//        }
+//
+//
+//        //グラウンドパターンの格納庫とそのイテレータ
+//        patternDB.clear();
+//
+//        //初期パターン
+//        pattern.clear();
+//
+//        //始めに検索対象文規則をパターン格納庫に入れる
+//        pattern.push_back(*sent_it);
+//        patternDB.push_back(pattern);
+//
+//        //ある単語規則に対するグラウンドパターン検索
+//        Element grnd_elm, mean_elm;
+//
+//        is_applied = is_absorute = is_complete = is_semicomplete = true;
+//        for (int in_idx = 0; is_applied && in_idx < (*sent_it).internal.size();
+//                in_idx++) {
+//            grnd_elm = (*sent_it).internal[in_idx]; //検査するインターナル要素
+//            mean_elm = src.internal[in_idx]; //基準のインターナル要素
+//
+//            if (grnd_elm == mean_elm) { //単語がそのまま一致する場合
+//                is_absorute &= true;
+//                continue;
+//            } else if (//変数の場合で、グラウンド可能な場合
+//                    grnd_elm.is_var() && //変数で
+//                    word_dic.find(grnd_elm.cat) != word_dic.end() && //変数のカテゴリが辞書に有り
+//                    word_dic[grnd_elm.cat].find(mean_elm.obj)
+//                    != word_dic[grnd_elm.cat].end() //辞書の指定カテゴリに単語がある
+//                    ) {
+//                DictionaryRange item_range;
+//                std::vector<PatternType> patternDB_buffer;
+//
+//                //変数に適用可能単語規則集合取得
+//                item_range = word_dic[grnd_elm.cat].equal_range(mean_elm.obj);
+//
+//                //すでに作られてる単語組に対し組み合わせの直積の生成
+//                patternDB_it = patternDB.begin();
+//                while (patternDB_it != patternDB.end()) {
+//                    //検索した適用可能な単語規則列
+//                    while (item_range.first != item_range.second) {
+//                        Rule word_item;
+//                        PatternType sub_pattern;
+//
+//                        //取得した単語規則をコピーして
+//                        word_item = (*(item_range.first)).second;
+//
+//                        //変数用の単語規則をinternalに書き込み
+//                        //            word_item.internal.front().set_var(in_idx, grnd_elm.cat);
+//
+//                        //すでに作られてる単語規則の組をコピー
+//                        sub_pattern = *patternDB_it;
+//                        //そこへ新しく単語規則を追加
+//                        sub_pattern.push_back(word_item);
+//
+//                        //新しく単語規則が追加された単語規則組を新しく保存
+//                        patternDB_buffer.push_back(sub_pattern);
+//
+//                        //適用可能単語規則列の最後まで繰り返す
+//                        item_range.first++;
+//                    }
+//                    //単語規則組が無くなるまで繰り返す
+//                    patternDB_it++;
+//                }
+//                //変更された単語規則組の列で元の単語規則組の列を置き換える
+//                patternDB.swap(patternDB_buffer);
+//
+//                is_complete &= true;
+//                is_absorute &= false;
+//            } else { //適合不可能文規則
+//                ungrounded_variable_num++;
+//
+//                if (ungrounded_variable_num > ABSENT_LIMIT) {
+//                    is_applied &= false;
+//                } else {
+//                    if (grnd_elm.is_var()) {
+//                        std::vector<PatternType> patternDB_buffer;
+//
+//                        //すでに作られてる単語組に対し組み合わせの直積の生成
+//                        patternDB_it = patternDB.begin();
+//                        while (patternDB_it != patternDB.end()) {
+//                            //検索した適用可能な単語規則列
+//                            PatternType sub_pattern;
+//                            Rule empty_word;
+//                            ExType empty_ex;
+//
+//                            //空の単語規則を作る
+//                            //              empty_word.set_noun(grnd_elm.cat, grnd_elm, empty_ex);
+//
+//                            //すでに作られてる単語規則の組をコピー
+//                            sub_pattern = *patternDB_it;
+//
+//                            //そこへ新しく単語規則を追加
+//                            sub_pattern.push_back(empty_word);
+//
+//                            //新しく単語規則が追加された単語規則組を新しく保存
+//                            patternDB_buffer.push_back(sub_pattern);
+//
+//                            //単語規則組が無くなるまで繰り返す
+//                            patternDB_it++;
+//                        }
+//                        //変更された単語規則組の列で元の単語規則組の列を置き換える
+//                        patternDB.swap(patternDB_buffer);
+//                    } else {
+//                        std::cerr << "pattern error" << std::endl;
+//                        throw;
+//                    }
+//
+//                    is_absorute &= false;
+//                    is_complete &= false;
+//                    is_semicomplete &= true;
+//                }
+//            }
+//        } //内部言語のグラウンドループ
+//
+//        //ある文規則に対して取得できたグラウンドパターンを保存
+//        if (is_applied) {
+//            if (is_absorute) {
+//                ret[ABSOLUTE].insert(ret[ABSOLUTE].end(), patternDB.begin(),
+//                        patternDB.end());
+//            } else if (is_complete) {
+//                ret[COMPLETE].insert(ret[COMPLETE].end(), patternDB.begin(),
+//                        patternDB.end());
+//            } else if (is_semicomplete) {
+//                ret[SEMICOMPLETE].insert(ret[SEMICOMPLETE].end(), patternDB.begin(),
+//                        patternDB.end());
+//            }
+//        }
+//
+//        //次の文規則を検査
+//        sent_it++;
+//    } //文規則のループ
+//
+//    //生成パターンの分類
+//    //	g_it = g_pattern.begin();
+//    //	for(; g_it != g_pattern.end(); g_it++){
+//    //		if((*g_it).front().composition() == 0){
+//    //			a_pattern.push_back(*g_it);
+//    //		}
+//    //		if((*g_it).front().composition()+1 == (*g_it).size()){
+//    //			c_pattern.push_back(*g_it);
+//    //		}
+//    //		else{
+//    //			s_pattern.push_back(*g_it);
+//    //		}
+//    //	}
+//    //
+//    //	ret[ABSOLUTE] = a_pattern;
+//    //	ret[COMPLETE] = c_pattern;
+//    //	ret[SEMICOMPLETE] = s_pattern;
+//    return ret;
+//}
 
 bool
 KnowledgeBase::acceptable(Rule& src) {
@@ -1792,48 +1792,48 @@ KnowledgeBase::grounded_rules(Rule src) {
     return grounded_rules;
 }
 
-std::vector<Rule>
-KnowledgeBase::grounded_rules2(Rule src, std::vector<KnowledgeBase::PatternType>& all_patterns) {
-    RuleDBType grounded_rules;
-    std::map<PATTERN_TYPE, std::vector<PatternType> > patterns, natural_patterns;
-    std::vector<PatternType>::iterator nat_it;
-
-    patterns = construct_grounding_patterns(src);
-
-    if (patterns[ABSOLUTE].size() == 0 && patterns[COMPLETE].size() == 0)
-        return grounded_rules;
-
-    if (patterns[ABSOLUTE].size() != 0) {
-        std::vector<PatternType>::iterator it;
-        it = patterns[ABSOLUTE].begin();
-        nat_it = natural_patterns[ABSOLUTE].begin();
-
-        while (it != patterns[ABSOLUTE].end()) {
-            grounded_rules.push_back((*it).front());
-            all_patterns.push_back(*nat_it);
-            nat_it++;
-            it++;
-        }
-    }
-
-    if (patterns[COMPLETE].size() != 0) {
-        std::vector<PatternType>::iterator pat_it;
-        pat_it = patterns[COMPLETE].begin();
-        nat_it = natural_patterns[COMPLETE].begin();
-
-        while (pat_it != patterns[COMPLETE].end()) {
-            Rule grounded_rule;
-            grounded_rule = src;
-            ground_with_pattern(grounded_rule, (*pat_it));
-            grounded_rules.push_back(grounded_rule);
-            all_patterns.push_back(*nat_it);
-            nat_it++;
-            pat_it++;
-        }
-    }
-
-    return grounded_rules;
-}
+//std::vector<Rule>
+//KnowledgeBase::grounded_rules2(Rule src, std::vector<KnowledgeBase::PatternType>& all_patterns) {
+//    RuleDBType grounded_rules;
+//    std::map<PATTERN_TYPE, std::vector<PatternType> > patterns, natural_patterns;
+//    std::vector<PatternType>::iterator nat_it;
+//
+//    patterns = construct_grounding_patterns(src);
+//
+//    if (patterns[ABSOLUTE].size() == 0 && patterns[COMPLETE].size() == 0)
+//        return grounded_rules;
+//
+//    if (patterns[ABSOLUTE].size() != 0) {
+//        std::vector<PatternType>::iterator it;
+//        it = patterns[ABSOLUTE].begin();
+//        nat_it = natural_patterns[ABSOLUTE].begin();
+//
+//        while (it != patterns[ABSOLUTE].end()) {
+//            grounded_rules.push_back((*it).front());
+//            all_patterns.push_back(*nat_it);
+//            nat_it++;
+//            it++;
+//        }
+//    }
+//
+//    if (patterns[COMPLETE].size() != 0) {
+//        std::vector<PatternType>::iterator pat_it;
+//        pat_it = patterns[COMPLETE].begin();
+//        nat_it = natural_patterns[COMPLETE].begin();
+//
+//        while (pat_it != patterns[COMPLETE].end()) {
+//            Rule grounded_rule;
+//            grounded_rule = src;
+//            ground_with_pattern(grounded_rule, (*pat_it));
+//            grounded_rules.push_back(grounded_rule);
+//            all_patterns.push_back(*nat_it);
+//            nat_it++;
+//            pat_it++;
+//        }
+//    }
+//
+//    return grounded_rules;
+//}
 
 std::vector<Rule>
 KnowledgeBase::groundable_rules(Rule& src) {

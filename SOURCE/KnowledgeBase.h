@@ -233,8 +233,8 @@ public:
      */
     std::map<PATTERN_TYPE, std::vector<PatternType> >
     construct_grounding_patterns(Rule& src);
-    std::map<PATTERN_TYPE, std::vector<PatternType> >
-    natural_construct_grounding_patterns(Rule& src);
+ /*   std::map<PATTERN_TYPE, std::vector<PatternType> >
+    natural_construct_grounding_patterns(Rule& src);*/
 
     void
     ground_with_pattern(Rule& src, PatternType& pattern);
@@ -242,8 +242,8 @@ public:
     groundable_rules(Rule& src);
     std::vector<Rule>
     grounded_rules(Rule src);
-    std::vector<Rule>
-    grounded_rules2(Rule src, std::vector<KnowledgeBase::PatternType>& all_patterns);
+    /*std::vector<Rule>
+    grounded_rules2(Rule src, std::vector<KnowledgeBase::PatternType>& all_patterns);*/
     bool
     clipping(Rule& mean, KnowledgeBase::PatternType& ptn, KnowledgeBase::PatternType& res);
     std::vector<Rule>

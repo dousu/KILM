@@ -193,14 +193,14 @@ double calculate_distance(std::vector<Rule>& meanings,
 		KnowledgeBase& kb1, KnowledgeBase& kb2) {
     
 	std::vector<Rule>::iterator mean_it, kb1_pat_it, kb2_pat_it, kb1_all_it, kb2_all_it, target_it;
-	std::vector<Rule> kb1_pat, kb2_pat, kb1_all, kb2_all, target_rules, temp;
+	std::vector<Rule> kb1_pat, kb2_pat, kb1_all, kb2_all, target_rules;
         double ham, min_ham=1000, lev, min_lev=2, lev_sum=0;
         
         mean_it=meanings.begin();
         
         for(;mean_it!=meanings.end();mean_it++){
             kb1_pat = kb1.grounded_rules(*mean_it);
-	    kb2_pat = kb2.grounded_rules(*mean_it);
+			kb2_pat = kb2.grounded_rules(*mean_it);
             kb1_pat_it=kb1_pat.begin();
             for(;kb1_pat_it!=kb1_pat.end();kb1_pat_it++){
                 kb1_all.push_back(*kb1_pat_it);
@@ -218,7 +218,7 @@ double calculate_distance(std::vector<Rule>& meanings,
                 ham=Distance::hamming((*kb1_all_it).internal, (*kb2_all_it).internal);
                 if(ham<min_ham){
                     min_ham=ham;
-                    target_rules=temp;
+                    target_rules=std::vector<Rule>();
                     target_rules.push_back(*kb2_all_it);
                 }else if(ham==min_ham){
                     target_rules.push_back(*kb2_all_it);
