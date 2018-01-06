@@ -53,6 +53,7 @@ class Parameters {
     bool SAVE_LAST_STATE;
     bool SAVE_ALL_STATE;
     bool ANALYZE;
+	bool OMISSION;
     FORMAT SAVE_FORMAT;
 
     std::string DICTIONARY_FILE;

@@ -30,6 +30,7 @@ Parameters::Parameters() {
   RESUME = false;
   SAVE_LAST_STATE = false;
   SAVE_ALL_STATE = false;
+  OMISSION = false;
 
   FILE_PREFIX = "KILM_";
   DATE_STR = date_str;
@@ -87,6 +88,10 @@ Parameters::set_option(boost::program_options::variables_map& vm) {
 
   if (vm.count("utterances")) {
     PER_UTTERANCES = vm["utterances"].as<double>();
+  }
+
+  if (vm.count("omission")) {
+	  OMISSION = true;
   }
 
   if (vm.count("analyze")) {

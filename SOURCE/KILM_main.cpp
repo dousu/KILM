@@ -309,6 +309,8 @@ int main(int argc, char* argv[]){
 					("utterances,u",
 					boost::program_options::value<double>(),
 					"Uttering ratio for meaning space (0.5/[0~1])")
+			/*言葉の省略*/
+					("omission", "Omission")
 			/*ロギング*/
 					("logging,l",
 					"Logging")
@@ -487,13 +489,23 @@ int main(int argc, char* argv[]){
 
 	if(param.LOGGING)
 		KirbyAgent::logging_on();
-
+	
+	KnowledgeBase::set_control(KnowledgeBase::ANTECEDE_COMPOSITION | param.CONTROLS);
+	MT19937::set_seed(param.RANDOM_SEED);
+	MT19937::waste();
+	if (param.OMISSION) {
+		MSILMAgent::omission_on();
+		KnowledgeBase::MEANING_SPACE = meaning_space;
+	}
+	
 	child_agent = parent_agent.make_child();
 	Base_Counter=parent_agent.generation_index;
 
+	//Log file Path
+	LogBox::set_filepath(param.BASE_PATH + param.LOG_FILE);
+
 	//使用意味空間の出力
 	if (param.LOGGING) {
-		//LogBox::set_filepath(param.LOG_FILE);
 		LogBox::set_filepath(param.BASE_PATH + param.LOG_FILE);
 		std::vector<Rule>::iterator mean_it;
 
@@ -507,10 +519,6 @@ int main(int argc, char* argv[]){
 		}
 		LogBox::push_log("\n");
 	}
-
-	KnowledgeBase::set_control(KnowledgeBase::ANTECEDE_COMPOSITION | param.CONTROLS);
-	MT19937::set_seed(param.RANDOM_SEED);
-	MT19937::waste();
 
 	/*
 	 * Utterance times
@@ -527,9 +535,6 @@ int main(int argc, char* argv[]){
 	if(param.PROGRESS){
 		show_progress = new boost::progress_display( param.UTTERANCES * param.MAX_GENERATIONS + 1);
 	}
-
-	//Log file Path
-	LogBox::set_filepath(param.BASE_PATH + param.LOG_FILE);
 
 	//Parameter Output
 	{
