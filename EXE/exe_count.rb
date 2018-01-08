@@ -103,10 +103,9 @@ def countProcess()
       puts "Thread runs #{works[i]} times"
       th=Thread.new{num=i;value=tmp2;works[num].times{|j| exe_counting(fileArray[value+j],num)}}
       threads.push(th)
-      sleep 0.1#確実にSTART THREADのすぐ下にACCESS FILE NAMEがでるようにしただけ(そんな遅くないから意味ないかも.mainのほうがadvantageがでかい)
+      sleep 0.1#確実にSTART THREADのすぐ下にACCESS FILE NAMEがでるようにしただけ(そんな遅くないから意味ないかも.
       tmp2+=works[i]
     end
-#    puts tmp2
   end
   threads.each{|t| t.join}
   
@@ -117,11 +116,6 @@ def countProcess()
   
   $RESULTbox.each_pair do |key, ar|
     index=key.split(" ")[-1].to_i
-    
-    #if index==90
-    #  puts key
-    #  puts ar.to_s
-    #end
     
     if $COUNTINGbox[index]==nil
       $COUNTINGbox[index]=ar.dup#.map!{|obj| obj/$ITERATEnum}
@@ -144,7 +138,6 @@ def countProcess()
   #output to file
   #puts $COUNTINGbox.to_s #check
   outputCOUNTINGbox;
-  
 end
 def exe_counting(name,th_num)
   puts "Thread Number #{th_num}"
@@ -157,8 +150,8 @@ def exe_counting(name,th_num)
   file=IO.readlines($folder+name).map! do |obj|
     obj.strip!.split(/[=(),]/).delete_if{|el| el==""}
   end
-  #puts file.to_s #->[["#RESULT"], ["BASIC", "41", "87", "23", "29"], ["SDISTM", "0.23221"], ["WDIST", "0"], ["#RESULT"], ["BASIC", "40", "89", "26", "17"], ["SDISTM", "0.285659"], ["WDIST", "0"]]
-  $RESULTbox[key]=[file[1][2].to_f,file[1][3].to_f,file[1][4].to_f,file[1][3].to_f+file[1][4].to_f,file[2][1].to_f,file[3][1].to_f,file[5][2].to_f,file[5][3].to_f,file[5][4].to_f,file[5][3].to_f+file[5][4].to_f,file[6][1].to_f,file[7][1].to_f]
+  #puts file.to_s #->[["#RESULT"], ["BASIC", "41", "87", "23", "29"], ["SDISTM", "0.23221"], ["#RESULT"], ["BASIC", "40", "89", "26", "17"], ["SDISTM", "0.285659"]]
+  $RESULTbox[key]=[file[1][2].to_f,file[1][3].to_f,file[1][4].to_f,file[1][3].to_f+file[1][4].to_f,file[2][1].to_f,file[4][2].to_f,file[4][3].to_f,file[4][4].to_f,file[4][3].to_f+file[4][4].to_f,file[5][1].to_f]
 end
 def outputCOUNTINGbox
   File.open($folder+"../"+$CountingFileName,"w") do |f|
@@ -174,9 +167,9 @@ def outputCOUNTINGbox
 end
 
 $ITERATEnum=100
-$msilm="../SOURCE/msilm.exe"
+$msilm="../SOURCE/kilm.exe"
 $dictionary="../SOURCE/data.dic"
-$THREADnum=10
+$THREADnum=5
 $RESULTbox=Hash.new
 $COUNTINGbox=Array.new
 
