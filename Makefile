@@ -1,15 +1,18 @@
 LD = -L/usr/local/lib
-LIBS = -lboost_serialization -lboost_program_options -lboost_system
+LIBS = -lboost_serialization -lboost_system -lboost_program_options
+SOURCEDIR = ./SOURCE
 OBJ = KirbyAgent.o KnowledgeBase.o Rule.o Element.o Dictionary.o IndexFactory.o Prefices.o LogBox.o Parameters.o MT19937.o
+OBJS = $(addprefix ${SOURCEDIR}/, $(OBJ))
 HD = Distance.hpp
-OPT = --std=c++14 -g -O2
-CXX = g++
+HDS = $(addprefix ${SOURCEDIR}/, $(HD))
+OPT = --std=c++14 -O2
 
-ki: ${OBJ}
-	${CXX} ${OPT} KILM_main.cpp ${OBJ} ${LD} ${LIBS} -o kilm.exe
+ki: ${OBJS}
+	${CXX} ${OPT} ${SOURCEDIR}/KILM_main.cpp ${OBJS} ${LD} ${LIBS} -o ${SOURCEDIR}/kilm.exe
 
-.cpp.o:
-	${CXX} ${OPT} -c $<
+$(SOURCEDIR)/%.o: %.cpp
+	@[ -d $(SOURCEDIR/) ]
+	${CXX} ${OPT} ${LD} ${LIBS} -o $@ -c $<
 
 KILM_main.cpp: KirbyAgent.o Rule.o Element.o LogBox.o Parameters.o MT19937.o ${HDS} KILM_main.h
 KirbyAgent.o: KnowledgeBase.o LogBox.o KirbyAgent.h
@@ -24,4 +27,4 @@ MT19937.o:MT19937.h
 Parameters.o:KnowledgeBase.o Parameters.h
 
 clean:
-	rm -f *.o *.dump *.exe *.log
+	rm -f ${SOURCEDIR}/*.o ${SOURCEDIR}/*.dump ${SOURCEDIR}/*.exe ${SOURCEDIR}/*.log

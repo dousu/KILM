@@ -1,8 +1,8 @@
 /*
  * MT19937E.cpp
  *
- *  Created on: 2011/08/04
- *      Author: Rindow
+ *  Created on: 2012/12/04
+ *      Author: Hiroki Sudo
  */
 
 #include "MT19937.h"
@@ -30,7 +30,7 @@ boost::variate_generator<boost::mt19937, boost::uniform_real<double> > MT19937::
 
 
 int MT19937::irand(void){
-	   if(icount < ULONG_LONG_MAX -1)
+	   if(icount < ULLONG_MAX -1)
 		   icount++;
 	   else
 		   throw "cannot use random any more";
@@ -39,7 +39,7 @@ int MT19937::irand(void){
 }
 
 double MT19937::rrand(void){
-	   if(rcount < ULONG_LONG_MAX -1)
+	   if(rcount < ULLONG_MAX -1)
 		   rcount++;
 	   else
 		   throw "cannot use random any more";
@@ -47,17 +47,19 @@ double MT19937::rrand(void){
 }
 
 void MT19937::waste(void){
-	   unsigned long long int i = 0LL;
-	   while (i < icount){
-		   _irand();
-		   i++;
-	   }
+	//    unsigned long long int i = 0LL;
+	//    while (i < icount){
+	// 	   _irand();
+	// 	   i++;
+	//    }
 
-	   i=0;
-	   while(i < rcount){
-		   _rrand();
-		   i++;
-	   }
+	//    i=0;
+	//    while(i < rcount){
+	// 	   _rrand();
+	// 	   i++;
+	//    }
+	_irand.engine().discard(icount);
+	_rrand.engine().discard(rcount);
 }
 
 void MT19937::set_seed(uint32_t seed_value){

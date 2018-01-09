@@ -1,8 +1,8 @@
 /*
  * KnowledgeBase.cpp
  *
- *  Created on: 2011/05/20
- *      Author: Rindow
+ *  Created on: 2012/11/20
+ *      Author: Hiroki Sudo
  */
 
 #include "KnowledgeBase.h"
@@ -13,16 +13,10 @@ uint32_t KnowledgeBase::CONTROLS = 0x00L;
 int KnowledgeBase::buzz_length = 3;
 
 bool KnowledgeBase::OMISSION_FLAG = false;
-bool KnowledgeBase::OMISSION_A = false;
-bool KnowledgeBase::OMISSION_B = false;
-bool KnowledgeBase::OMISSION_C = false;
-bool KnowledgeBase::OMISSION_D = false;
 std::vector<Rule> KnowledgeBase::MEANING_SPACE;
 
 KnowledgeBase::KnowledgeBase() {
     DIC_BLD = false;
-    indexed = false;
-    exception.clear();
 }
 
 KnowledgeBase::~KnowledgeBase() {
@@ -46,10 +40,6 @@ KnowledgeBase&
     CONTROLS = dst.CONTROLS;
     buzz_length = dst.buzz_length;
     OMISSION_FLAG = dst.OMISSION_FLAG;
-    OMISSION_A = dst.OMISSION_A;
-    OMISSION_B = dst.OMISSION_B;
-    OMISSION_C = dst.OMISSION_C;
-    OMISSION_D = dst.OMISSION_D;
 
     return *this;
 }
@@ -480,12 +470,14 @@ KnowledgeBase::chunking(Rule& src, Rule& dst) {
 
             sent.external.push_back(new_cat);
 
+            std::vector<Element> ext_buf;
             std::vector<Element>::reverse_iterator rit;
             rit = base.external.rbegin();
             while (rit != base.external.rbegin() + rmatch_length) {
-                sent.external.push_back(*rit);
+                ext_buf.insert(ext_buf.begin(),*rit);
                 rit++;
             }
+            sent.external.insert(sent.external.end(),ext_buf.begin(),ext_buf.end());
 
             buf.push_back(sent);
             buf.push_back(noun1);
@@ -543,6 +535,7 @@ KnowledgeBase::merging(Rule& src) {
     //word_boxを変更しなければイテレータは使える
     RuleDBType::iterator it;
     RuleDBType buf, sub_buf;
+    Rule src_tmp = src;
 
     //word 適合するか検索
     //Merge対象として適合したら、直接カテゴリを書き換えて、
@@ -551,10 +544,10 @@ KnowledgeBase::merging(Rule& src) {
     std::map<int, bool> unified_cat;
 
     //既存単語規則の被変更カテゴリの収拾
-    collect_merge_cat(src, wordDB, unified_cat);
+    collect_merge_cat(src_tmp, wordDB, unified_cat);
 
     //未検証単語規則の被変更カテゴリの収拾
-    collect_merge_cat(src, word_box, unified_cat);
+    collect_merge_cat(src_tmp, word_box, unified_cat);
 
     //被変更カテゴリの数が0ならMergeは起こらない
     if (unified_cat.size() == 0)
@@ -562,7 +555,7 @@ KnowledgeBase::merging(Rule& src) {
 
     if (LOGGING_FLAG) {
         LogBox::push_log("\n-->>MERGE:");
-        LogBox::push_log(src.to_s());
+        LogBox::push_log(src_tmp.to_s());
         LogBox::push_log("**ABOUT");
         std::map<int, bool>::iterator it;
         std::vector<std::string> cat_vec;
@@ -578,20 +571,20 @@ KnowledgeBase::merging(Rule& src) {
 
     //単語の書き換え
     //既存単語規則
-    merge_noun_proc(src, wordDB, unified_cat);
+    merge_noun_proc(src_tmp, wordDB, unified_cat);
 
     //未検証単語規則
-    merge_noun_proc(src, word_box, unified_cat);
+    merge_noun_proc(src_tmp, word_box, unified_cat);
 
     //文規則の書き換え
-    sub_buf = merge_sent_proc(src, sbox_buffer, unified_cat);
+    sub_buf = merge_sent_proc(src_tmp, sbox_buffer, unified_cat);
     buf.insert(buf.end(), sub_buf.begin(), sub_buf.end());
 
     // boxは直接書き換え
-    sub_buf = merge_sent_proc(src, sentence_box, unified_cat);
+    sub_buf = merge_sent_proc(src_tmp, sentence_box, unified_cat);
     buf.insert(buf.end(), sub_buf.begin(), sub_buf.end());
 
-    sub_buf = merge_sent_proc(src, sentenceDB, unified_cat);
+    sub_buf = merge_sent_proc(src_tmp, sentenceDB, unified_cat);
     buf.insert(buf.end(), sub_buf.begin(), sub_buf.end());
 
     //カテゴリが書き換えられた文規則をBOXへ追加
@@ -864,11 +857,6 @@ KnowledgeBase::replacing(Rule& word, RuleDBType& checking_sents) {
     return total_match;
 }
 
-void
-KnowledgeBase::prohibited(KnowledgeBase::PatternType rules) {
-    exception.push_back(rules);
-}
-
 bool
 KnowledgeBase::obliterate(void) {
     std::vector<Rule>::iterator it1, it2;
@@ -969,10 +957,6 @@ KnowledgeBase::build_word_index(void) {
             word_dic.insert(std::map<int, ItemType>::value_type((*it).cat, temp));
         }
 
-        normal_word_dic.insert(
-                std::multimap<Element, Rule>::value_type((*it).internal.front(),
-                (*it)));
-
         it++;
     }
 
@@ -998,7 +982,6 @@ KnowledgeBase::fabricate(Rule& src1) {
     }
     
     if (all_patterns[COMPLETE].size() != 0) {
-//        std::cerr << "DDDDDDDDDDDD" << std::endl;
         std::vector<PatternType> sorted_patterns;
         std::vector<PatternType>::iterator sort_it;
         int pattern_length = 0;
@@ -1047,7 +1030,7 @@ KnowledgeBase::fabricate(Rule& src1) {
             }
         }
 
-        graund_with_pattern(src, target_pattern);
+        ground_with_pattern(src, target_pattern);
     } else if (all_patterns[ABSOLUTE].size() != 0) {
 //        std::cerr << "DDDDDDDDDDDD2" << std::endl;
         if (LOGGING_FLAG) {
@@ -1091,7 +1074,6 @@ KnowledgeBase::fabricate(Rule& src1) {
             }
             LogBox::push_log("***<<-USED_RULES");
         }
-//std::cerr << "?FFFFFFFF" << std::endl;
         //completion
         PatternType use_pattern;
         PatternType::iterator it;
@@ -1130,7 +1112,6 @@ KnowledgeBase::fabricate(Rule& src1) {
                 }
             }
         }
-//std::cerr << "GGGGGGGGGGGG" << std::endl;
         if (clipping_fl) {
             clipped = clipping(src, use_pattern, target_pattern);
         } else {
@@ -1150,9 +1131,8 @@ KnowledgeBase::fabricate(Rule& src1) {
             }
         }
 
-        graund_with_pattern(src, target_pattern);
+        ground_with_pattern(src, target_pattern);
     } else {
-//        std::cerr << "DDDDDDDDDDDD4" << std::endl;
         if (LOGGING_FLAG) {
             LogBox::push_log("**RANDOM");
         }
@@ -1174,13 +1154,12 @@ KnowledgeBase::fabricate(Rule& src1) {
         LogBox::push_log(src.to_s());
         LogBox::push_log("<<--FABRICATE");
     }
-//    std::cerr << "EEEEEEEEEEEEE" << std::endl;
 
     return src;
 }
 
 Rule
-KnowledgeBase::pseudofabricate(Rule& src1) {
+KnowledgeBase::fabricate_for_complementing(Rule& src1) {
 
     std::vector<PatternType> groundable_patterns;
     std::map<PATTERN_TYPE, std::vector<PatternType> > all_patterns, all_patterns2;
@@ -1190,12 +1169,6 @@ KnowledgeBase::pseudofabricate(Rule& src1) {
     int DB = 0;
 
     all_patterns = construct_grounding_patterns(src);
-    all_patterns2 = natural_construct_grounding_patterns(src);
-    exception_filter(all_patterns, all_patterns2);
-
-    if (LOGGING_FLAG) {
-        //    LogBox::push_log("\n-->>pseudoFABRICATE:");
-    }
 
     if (all_patterns[SEMICOMPLETE].size() != 0) {
         std::vector<PatternType> sorted_patterns;
@@ -1216,19 +1189,6 @@ KnowledgeBase::pseudofabricate(Rule& src1) {
             all_patterns[SEMICOMPLETE].swap(sorted_patterns);
         }
         rand_index = MT19937::irand() % all_patterns[SEMICOMPLETE].size();
-
-        if (LOGGING_FLAG) {
-            std::vector<Rule>::iterator deb_it;
-
-            //        LogBox::push_log("**SEMI CONSTRUCT");
-            //        LogBox::push_log("***->>USED_RULES");
-            deb_it = (all_patterns[SEMICOMPLETE])[rand_index].begin();
-            while (deb_it != (all_patterns[SEMICOMPLETE])[rand_index].end()) {
-                //             LogBox::push_log((*deb_it).to_s());
-                deb_it++;
-            }
-            //           LogBox::push_log("***<<-USED_RULES");
-        }
 
         //completion
         PatternType use_pattern;
@@ -1252,197 +1212,22 @@ KnowledgeBase::pseudofabricate(Rule& src1) {
                     }
                     keep_word.set_noun((*it).cat, src.internal[index], buzz);
                     //send_db(keep_word);
-                    if (LOGGING_FLAG) {
-                        //                       LogBox::push_log("***->>KEPT THE COMP_RULE");
-                        //                       LogBox::push_log(keep_word.to_s());
-                        //                       LogBox::push_log("***<<-KEPT THE COMP_RULE");
-                    }
-                }
-                if (LOGGING_FLAG) {
-                    //                   LogBox::push_log("***->>COMP_RULE");
-                    //                 LogBox::push_log((*it).to_s());
-                    //                 LogBox::push_log("***<<-COMP_RULE");
                 }
             }
         }
 
-        graund_with_pattern(src, use_pattern);
+        ground_with_pattern(src, use_pattern);
     } else {
-        if (LOGGING_FLAG) {
-            //         LogBox::push_log("**RANDOM");
-        }
-
         ExType ex;
         ex = construct_buzz_word();
         src.external.swap(ex);
 
         if (CONTROLS & USE_ADDITION_OF_RANDOM_WORD) {
             //send_db(src);
-            if (LOGGING_FLAG) {
-                //             LogBox::push_log("**KEPT THE RULE");
-            }
         }
-    }
-
-    if (LOGGING_FLAG) {
-        //       LogBox::push_log("**OUTPUT");
-        //       LogBox::push_log(src.to_s());
-        //       LogBox::push_log("<<--pseudoFABRICATE");
     }
 
     return src;
-}
-
-Rule
-KnowledgeBase::fabricate_min_len(Rule& src1) {
-    std::vector<PatternType> groundable_patterns;
-    std::vector<Rule> buf;
-    std::map<PATTERN_TYPE, std::vector<PatternType> > all_patterns, all_patterns2;
-    Rule src;
-    src = src1;
-    int DB = 0;
-    KnowledgeBase::PatternType target_pattern;
-    bool omission_changed = false;
-
-    all_patterns = construct_grounding_patterns(src);
-    all_patterns2 = natural_construct_grounding_patterns(src);
-    exception_filter(all_patterns, all_patterns2);
-
-    if (LOGGING_FLAG) {
-        LogBox::push_log("\n-->>FABRICATE2:");
-    }
-
-    //まずAbsoluteをプッシュ
-    for (int i = 0; i < all_patterns[ABSOLUTE].size(); i++) {
-        buf.push_back(all_patterns[ABSOLUTE][i].front());
-    }
-
-    //次にCompleteをグラウンドしてプッシュ
-    for (int i = 0; i < all_patterns[COMPLETE].size(); i++) {
-        if (LOGGING_FLAG) {
-            std::vector<Rule>::iterator deb_it;
-
-            LogBox::push_log("**CONSTRUCT");
-            LogBox::push_log("***->>USED_RULES");
-            deb_it = (all_patterns[COMPLETE])[i].begin();
-            while (deb_it != (all_patterns[COMPLETE])[i].end()) {
-                LogBox::push_log((*deb_it).to_s());
-                deb_it++;
-            }
-            LogBox::push_log("***<<-USED_RULES");
-        }
-        Rule grounded_rule;
-        grounded_rule = src;
-        if (OMISSION_FLAG) {
-            omission_changed = clipping(src1, all_patterns[COMPLETE][i], target_pattern);
-        } else {
-            target_pattern = all_patterns[COMPLETE][i];
-        }
-        graund_with_pattern(grounded_rule, target_pattern);
-        // graund_with_pattern(grounded_rule, all_patterns[COMPLETE][i]);
-        buf.push_back(grounded_rule);
-    }
-
-    //最後にインベンションしてプッシュ
-    for (int i = 0; i < all_patterns[SEMICOMPLETE].size(); i++) {
-        if (LOGGING_FLAG) {
-            std::vector<Rule>::iterator deb_it;
-            LogBox::push_log("**SEMI CONSTRUCT");
-            LogBox::push_log("***->>USED_RULES");
-            deb_it = (all_patterns[SEMICOMPLETE])[i].begin();
-            while (deb_it != (all_patterns[SEMICOMPLETE])[i].end()) {
-                LogBox::push_log((*deb_it).to_s());
-                deb_it++;
-            }
-            LogBox::push_log("***<<-USED_RULES");
-        }
-
-        //completion
-        PatternType use_pattern;
-        PatternType::iterator it;
-
-        use_pattern = all_patterns[SEMICOMPLETE][i];
-
-        for (it = use_pattern.begin(); it != use_pattern.end(); it++) {
-            if ((*it).is_noun() && (*it).external.size() == 0) {
-                ExType buzz;
-                buzz = construct_buzz_word();
-                (*it).external = buzz;
-
-                if (CONTROLS & USE_ADDITION_OF_RANDOM_WORD) {
-                    Rule keep_word;
-                    int index;
-                    for (int i = 0; i < use_pattern.front().internal.size(); i++) {
-                        if ((*it).internal.front() == use_pattern.front().internal[i]) {
-                            index = i;
-                            break;
-                        }
-                    }
-                    keep_word.set_noun((*it).cat, src.internal[index], buzz);
-                    send_db(keep_word);
-                    if (LOGGING_FLAG) {
-                        LogBox::push_log("***->>KEPT THE COMP_RULE");
-                        LogBox::push_log(keep_word.to_s());
-                        LogBox::push_log("***<<-KEPT THE COMP_RULE");
-                    }
-                    DIC_BLD = false;
-                    word_dic.clear();
-                    build_word_index();
-                }
-
-                if (LOGGING_FLAG) {
-                    LogBox::push_log("***->>COMP_RULE");
-                    LogBox::push_log((*it).to_s());
-                    LogBox::push_log("***<<-COMP_RULE");
-                }
-            }
-        }
-
-        Rule grounded_rule;
-        grounded_rule = src;
-        if (OMISSION_FLAG) {
-            omission_changed = clipping(src1, use_pattern, target_pattern);
-        } else {
-            target_pattern = use_pattern;
-        }
-        graund_with_pattern(grounded_rule, target_pattern);
-        //        graund_with_pattern(grounded_rule, use_pattern);
-        buf.push_back(grounded_rule);
-    }
-
-    //最後にもし発話できないときランダムをプッシュ
-    if (buf.size() == 0) {
-        if (LOGGING_FLAG) {
-            LogBox::push_log("**RANDOM");
-        }
-
-        ExType ex;
-        ex = construct_buzz_word();
-
-        Rule grounded_rule;
-        grounded_rule = src;
-
-        grounded_rule.external = ex;
-        buf.push_back(grounded_rule);
-
-        if (CONTROLS & USE_ADDITION_OF_RANDOM_WORD) {
-            send_db(src);
-            if (LOGGING_FLAG) {
-                LogBox::push_log("**KEPT THE RULE");
-            }
-        }
-    }
-
-    //でbufをExternalサイズでソート？
-    std::sort(buf.begin(), buf.end(), ExternalSizeSort());
-
-    if (LOGGING_FLAG) {
-        LogBox::push_log("**OUTPUT");
-        LogBox::push_log(buf.front().to_s());
-        LogBox::push_log("<<--FABRICATE");
-    }
-
-    return buf.front();
 }
 
 KnowledgeBase::ExType
@@ -1469,7 +1254,7 @@ KnowledgeBase::construct_buzz_word(void) {
 }
 
 void
-KnowledgeBase::graund_with_pattern(Rule& src, PatternType& pattern) {
+KnowledgeBase::ground_with_pattern(Rule& src, PatternType& pattern) {
     ExType::iterator sent_ex_it;
     PatternType::iterator pattern_it;
     Rule base_rule;
@@ -1477,7 +1262,6 @@ KnowledgeBase::graund_with_pattern(Rule& src, PatternType& pattern) {
 
     tmp_ptn = pattern;
     base_rule = tmp_ptn.front();
-    //tmp_ptn.erase(tmp_ptn.begin(), tmp_ptn.begin() + 1);
     tmp_ptn.erase(tmp_ptn.begin());
     sent_ex_it = base_rule.external.begin();
     src.external.clear();
@@ -1527,11 +1311,6 @@ KnowledgeBase::construct_grounding_patterns(Rule& src) {
     std::vector<PatternType>::iterator patternDB_it;
     //初期パターン
     PatternType pattern;
-    //  exception検知用
-    //  std::vector<std::vector<Rule> > exceptionDB;
-    //  std::vector<std::vector<Rule> >::iterator exceptionDB_it;
-    //  std::vector<Rule>::iterator exceptionP_it;
-    //  bool exp_flag;
 
     sent_it = sentenceDB.begin();
     while (sent_it != sentenceDB.end()) {
@@ -1559,15 +1338,6 @@ KnowledgeBase::construct_grounding_patterns(Rule& src) {
             continue;
         }
 
-        //    文ルールがマッチするexceptionだけをexceptionDBに格納
-        //    exceptionDB_it=exception.begin();
-        //    for(; exceptionDB_it!=exception.end(); exceptionDB_it++){
-        //        exp_flag=((*exceptionDB_it)[0]==(*sent_it));
-        //        
-        //        if(exp_flag){
-        //            exceptionDB.push_back((*exceptionDB_it));
-        //        }
-        //    }
 
         //グラウンドパターンの格納庫とそのイテレータ
         patternDB.clear();
@@ -1720,221 +1490,207 @@ KnowledgeBase::construct_grounding_patterns(Rule& src) {
     return ret;
 }
 
-std::map<KnowledgeBase::PATTERN_TYPE, std::vector<KnowledgeBase::PatternType> >
-KnowledgeBase::natural_construct_grounding_patterns(Rule& src) {
-    typedef std::pair<std::multimap<int, Rule>::iterator,
-            std::multimap<int, Rule>::iterator> DictionaryRange;
-
-    /*
-     * Srcに対して、それぞれの文規則がグラウンド可能か検査する
-     * グラウンディング可能な場合、そのグラウンディングに使用する
-     * 単語規則とその文規則の組の全パターンを集める
-     */
-    //build_word_index();
-
-    //SentenceDBシーケンス用
-    RuleDBType::iterator sent_it;
-    bool filted;
-    int ungrounded_variable_num;
-    bool is_applied, is_absorute, is_complete, is_semicomplete;
-    std::map<PATTERN_TYPE, std::vector<KnowledgeBase::PatternType> > ret;
-    //グラウンドパターンの格納庫とそのイテレータ
-    std::vector<PatternType> patternDB;
-    std::vector<PatternType>::iterator patternDB_it;
-    //初期パターン
-    PatternType pattern;
-    //  exception検知用
-    //  std::vector<std::vector<Rule> > exceptionDB;
-    //  std::vector<std::vector<Rule> >::iterator exceptionDB_it;
-    //  std::vector<Rule>::iterator exceptionP_it;
-    //  bool exp_flag;
-
-    sent_it = sentenceDB.begin();
-    while (sent_it != sentenceDB.end()) {
-
-        ungrounded_variable_num = 0;
-
-        //拡張用:内部言語列長の同一性検査
-        // 将来的に内部言語列長が異なるものがデータベースに入るかも知れないので
-        if ((*sent_it).internal.size() != src.internal.size()) {
-            sent_it++;
-            continue;
-        }
-
-        //高速化枝狩り
-        //対象が1カ所でも一致していないものは使えない
-        filted = true;
-        for (int index = 0; index < src.internal.size() && filted; index++) {
-            if ((*sent_it).internal[index].is_ind()
-                    && src.internal[index] != (*sent_it).internal[index]) {
-                filted = false;
-            }
-        }
-        if (!filted) {
-            sent_it++;
-            continue;
-        }
-
-        //    文ルールがマッチするexceptionだけをexceptionDBに格納
-        //    exceptionDB_it=exception.begin();
-        //    for(; exceptionDB_it!=exception.end(); exceptionDB_it++){
-        //        exp_flag=((*exceptionDB_it)[0]==(*sent_it));
-        //        
-        //        if(exp_flag){
-        //            exceptionDB.push_back((*exceptionDB_it));
-        //        }
-        //    }
-
-        //グラウンドパターンの格納庫とそのイテレータ
-        patternDB.clear();
-
-        //初期パターン
-        pattern.clear();
-
-        //始めに検索対象文規則をパターン格納庫に入れる
-        pattern.push_back(*sent_it);
-        patternDB.push_back(pattern);
-
-        //ある単語規則に対するグラウンドパターン検索
-        Element grnd_elm, mean_elm;
-
-        is_applied = is_absorute = is_complete = is_semicomplete = true;
-        for (int in_idx = 0; is_applied && in_idx < (*sent_it).internal.size();
-                in_idx++) {
-            grnd_elm = (*sent_it).internal[in_idx]; //検査するインターナル要素
-            mean_elm = src.internal[in_idx]; //基準のインターナル要素
-
-            if (grnd_elm == mean_elm) { //単語がそのまま一致する場合
-                is_absorute &= true;
-                continue;
-            } else if (//変数の場合で、グラウンド可能な場合
-                    grnd_elm.is_var() && //変数で
-                    word_dic.find(grnd_elm.cat) != word_dic.end() && //変数のカテゴリが辞書に有り
-                    word_dic[grnd_elm.cat].find(mean_elm.obj)
-                    != word_dic[grnd_elm.cat].end() //辞書の指定カテゴリに単語がある
-                    ) {
-                DictionaryRange item_range;
-                std::vector<PatternType> patternDB_buffer;
-
-                //変数に適用可能単語規則集合取得
-                item_range = word_dic[grnd_elm.cat].equal_range(mean_elm.obj);
-
-                //すでに作られてる単語組に対し組み合わせの直積の生成
-                patternDB_it = patternDB.begin();
-                while (patternDB_it != patternDB.end()) {
-                    //検索した適用可能な単語規則列
-                    while (item_range.first != item_range.second) {
-                        Rule word_item;
-                        PatternType sub_pattern;
-
-                        //取得した単語規則をコピーして
-                        word_item = (*(item_range.first)).second;
-
-                        //変数用の単語規則をinternalに書き込み
-                        //            word_item.internal.front().set_var(in_idx, grnd_elm.cat);
-
-                        //すでに作られてる単語規則の組をコピー
-                        sub_pattern = *patternDB_it;
-                        //そこへ新しく単語規則を追加
-                        sub_pattern.push_back(word_item);
-
-                        //新しく単語規則が追加された単語規則組を新しく保存
-                        patternDB_buffer.push_back(sub_pattern);
-
-                        //適用可能単語規則列の最後まで繰り返す
-                        item_range.first++;
-                    }
-                    //単語規則組が無くなるまで繰り返す
-                    patternDB_it++;
-                }
-                //変更された単語規則組の列で元の単語規則組の列を置き換える
-                patternDB.swap(patternDB_buffer);
-
-                is_complete &= true;
-                is_absorute &= false;
-            } else { //適合不可能文規則
-                ungrounded_variable_num++;
-
-                if (ungrounded_variable_num > ABSENT_LIMIT) {
-                    is_applied &= false;
-                } else {
-                    if (grnd_elm.is_var()) {
-                        std::vector<PatternType> patternDB_buffer;
-
-                        //すでに作られてる単語組に対し組み合わせの直積の生成
-                        patternDB_it = patternDB.begin();
-                        while (patternDB_it != patternDB.end()) {
-                            //検索した適用可能な単語規則列
-                            PatternType sub_pattern;
-                            Rule empty_word;
-                            ExType empty_ex;
-
-                            //空の単語規則を作る
-                            //              empty_word.set_noun(grnd_elm.cat, grnd_elm, empty_ex);
-
-                            //すでに作られてる単語規則の組をコピー
-                            sub_pattern = *patternDB_it;
-
-                            //そこへ新しく単語規則を追加
-                            sub_pattern.push_back(empty_word);
-
-                            //新しく単語規則が追加された単語規則組を新しく保存
-                            patternDB_buffer.push_back(sub_pattern);
-
-                            //単語規則組が無くなるまで繰り返す
-                            patternDB_it++;
-                        }
-                        //変更された単語規則組の列で元の単語規則組の列を置き換える
-                        patternDB.swap(patternDB_buffer);
-                    } else {
-                        std::cerr << "pattern error" << std::endl;
-                        throw;
-                    }
-
-                    is_absorute &= false;
-                    is_complete &= false;
-                    is_semicomplete &= true;
-                }
-            }
-        } //内部言語のグラウンドループ
-
-        //ある文規則に対して取得できたグラウンドパターンを保存
-        if (is_applied) {
-            if (is_absorute) {
-                ret[ABSOLUTE].insert(ret[ABSOLUTE].end(), patternDB.begin(),
-                        patternDB.end());
-            } else if (is_complete) {
-                ret[COMPLETE].insert(ret[COMPLETE].end(), patternDB.begin(),
-                        patternDB.end());
-            } else if (is_semicomplete) {
-                ret[SEMICOMPLETE].insert(ret[SEMICOMPLETE].end(), patternDB.begin(),
-                        patternDB.end());
-            }
-        }
-
-        //次の文規則を検査
-        sent_it++;
-    } //文規則のループ
-
-    //生成パターンの分類
-    //	g_it = g_pattern.begin();
-    //	for(; g_it != g_pattern.end(); g_it++){
-    //		if((*g_it).front().composition() == 0){
-    //			a_pattern.push_back(*g_it);
-    //		}
-    //		if((*g_it).front().composition()+1 == (*g_it).size()){
-    //			c_pattern.push_back(*g_it);
-    //		}
-    //		else{
-    //			s_pattern.push_back(*g_it);
-    //		}
-    //	}
-    //
-    //	ret[ABSOLUTE] = a_pattern;
-    //	ret[COMPLETE] = c_pattern;
-    //	ret[SEMICOMPLETE] = s_pattern;
-    return ret;
-}
+//std::map<KnowledgeBase::PATTERN_TYPE, std::vector<KnowledgeBase::PatternType> >
+//KnowledgeBase::natural_construct_grounding_patterns(Rule& src) {
+//    typedef std::pair<std::multimap<int, Rule>::iterator,
+//            std::multimap<int, Rule>::iterator> DictionaryRange;
+//
+//    /*
+//     * Srcに対して、それぞれの文規則がグラウンド可能か検査する
+//     * グラウンディング可能な場合、そのグラウンディングに使用する
+//     * 単語規則とその文規則の組の全パターンを集める
+//     */
+//    //build_word_index();
+//
+//    //SentenceDBシーケンス用
+//    RuleDBType::iterator sent_it;
+//    bool filted;
+//    int ungrounded_variable_num;
+//    bool is_applied, is_absorute, is_complete, is_semicomplete;
+//    std::map<PATTERN_TYPE, std::vector<KnowledgeBase::PatternType> > ret;
+//    //グラウンドパターンの格納庫とそのイテレータ
+//    std::vector<PatternType> patternDB;
+//    std::vector<PatternType>::iterator patternDB_it;
+//    //初期パターン
+//    PatternType pattern;
+//
+//    sent_it = sentenceDB.begin();
+//    while (sent_it != sentenceDB.end()) {
+//
+//        ungrounded_variable_num = 0;
+//
+//        //拡張用:内部言語列長の同一性検査
+//        // 将来的に内部言語列長が異なるものがデータベースに入るかも知れないので
+//        if ((*sent_it).internal.size() != src.internal.size()) {
+//            sent_it++;
+//            continue;
+//        }
+//
+//        //高速化枝狩り
+//        //対象が1カ所でも一致していないものは使えない
+//        filted = true;
+//        for (int index = 0; index < src.internal.size() && filted; index++) {
+//            if ((*sent_it).internal[index].is_ind()
+//                    && src.internal[index] != (*sent_it).internal[index]) {
+//                filted = false;
+//            }
+//        }
+//        if (!filted) {
+//            sent_it++;
+//            continue;
+//        }
+//
+//
+//        //グラウンドパターンの格納庫とそのイテレータ
+//        patternDB.clear();
+//
+//        //初期パターン
+//        pattern.clear();
+//
+//        //始めに検索対象文規則をパターン格納庫に入れる
+//        pattern.push_back(*sent_it);
+//        patternDB.push_back(pattern);
+//
+//        //ある単語規則に対するグラウンドパターン検索
+//        Element grnd_elm, mean_elm;
+//
+//        is_applied = is_absorute = is_complete = is_semicomplete = true;
+//        for (int in_idx = 0; is_applied && in_idx < (*sent_it).internal.size();
+//                in_idx++) {
+//            grnd_elm = (*sent_it).internal[in_idx]; //検査するインターナル要素
+//            mean_elm = src.internal[in_idx]; //基準のインターナル要素
+//
+//            if (grnd_elm == mean_elm) { //単語がそのまま一致する場合
+//                is_absorute &= true;
+//                continue;
+//            } else if (//変数の場合で、グラウンド可能な場合
+//                    grnd_elm.is_var() && //変数で
+//                    word_dic.find(grnd_elm.cat) != word_dic.end() && //変数のカテゴリが辞書に有り
+//                    word_dic[grnd_elm.cat].find(mean_elm.obj)
+//                    != word_dic[grnd_elm.cat].end() //辞書の指定カテゴリに単語がある
+//                    ) {
+//                DictionaryRange item_range;
+//                std::vector<PatternType> patternDB_buffer;
+//
+//                //変数に適用可能単語規則集合取得
+//                item_range = word_dic[grnd_elm.cat].equal_range(mean_elm.obj);
+//
+//                //すでに作られてる単語組に対し組み合わせの直積の生成
+//                patternDB_it = patternDB.begin();
+//                while (patternDB_it != patternDB.end()) {
+//                    //検索した適用可能な単語規則列
+//                    while (item_range.first != item_range.second) {
+//                        Rule word_item;
+//                        PatternType sub_pattern;
+//
+//                        //取得した単語規則をコピーして
+//                        word_item = (*(item_range.first)).second;
+//
+//                        //変数用の単語規則をinternalに書き込み
+//                        //            word_item.internal.front().set_var(in_idx, grnd_elm.cat);
+//
+//                        //すでに作られてる単語規則の組をコピー
+//                        sub_pattern = *patternDB_it;
+//                        //そこへ新しく単語規則を追加
+//                        sub_pattern.push_back(word_item);
+//
+//                        //新しく単語規則が追加された単語規則組を新しく保存
+//                        patternDB_buffer.push_back(sub_pattern);
+//
+//                        //適用可能単語規則列の最後まで繰り返す
+//                        item_range.first++;
+//                    }
+//                    //単語規則組が無くなるまで繰り返す
+//                    patternDB_it++;
+//                }
+//                //変更された単語規則組の列で元の単語規則組の列を置き換える
+//                patternDB.swap(patternDB_buffer);
+//
+//                is_complete &= true;
+//                is_absorute &= false;
+//            } else { //適合不可能文規則
+//                ungrounded_variable_num++;
+//
+//                if (ungrounded_variable_num > ABSENT_LIMIT) {
+//                    is_applied &= false;
+//                } else {
+//                    if (grnd_elm.is_var()) {
+//                        std::vector<PatternType> patternDB_buffer;
+//
+//                        //すでに作られてる単語組に対し組み合わせの直積の生成
+//                        patternDB_it = patternDB.begin();
+//                        while (patternDB_it != patternDB.end()) {
+//                            //検索した適用可能な単語規則列
+//                            PatternType sub_pattern;
+//                            Rule empty_word;
+//                            ExType empty_ex;
+//
+//                            //空の単語規則を作る
+//                            //              empty_word.set_noun(grnd_elm.cat, grnd_elm, empty_ex);
+//
+//                            //すでに作られてる単語規則の組をコピー
+//                            sub_pattern = *patternDB_it;
+//
+//                            //そこへ新しく単語規則を追加
+//                            sub_pattern.push_back(empty_word);
+//
+//                            //新しく単語規則が追加された単語規則組を新しく保存
+//                            patternDB_buffer.push_back(sub_pattern);
+//
+//                            //単語規則組が無くなるまで繰り返す
+//                            patternDB_it++;
+//                        }
+//                        //変更された単語規則組の列で元の単語規則組の列を置き換える
+//                        patternDB.swap(patternDB_buffer);
+//                    } else {
+//                        std::cerr << "pattern error" << std::endl;
+//                        throw;
+//                    }
+//
+//                    is_absorute &= false;
+//                    is_complete &= false;
+//                    is_semicomplete &= true;
+//                }
+//            }
+//        } //内部言語のグラウンドループ
+//
+//        //ある文規則に対して取得できたグラウンドパターンを保存
+//        if (is_applied) {
+//            if (is_absorute) {
+//                ret[ABSOLUTE].insert(ret[ABSOLUTE].end(), patternDB.begin(),
+//                        patternDB.end());
+//            } else if (is_complete) {
+//                ret[COMPLETE].insert(ret[COMPLETE].end(), patternDB.begin(),
+//                        patternDB.end());
+//            } else if (is_semicomplete) {
+//                ret[SEMICOMPLETE].insert(ret[SEMICOMPLETE].end(), patternDB.begin(),
+//                        patternDB.end());
+//            }
+//        }
+//
+//        //次の文規則を検査
+//        sent_it++;
+//    } //文規則のループ
+//
+//    //生成パターンの分類
+//    //	g_it = g_pattern.begin();
+//    //	for(; g_it != g_pattern.end(); g_it++){
+//    //		if((*g_it).front().composition() == 0){
+//    //			a_pattern.push_back(*g_it);
+//    //		}
+//    //		if((*g_it).front().composition()+1 == (*g_it).size()){
+//    //			c_pattern.push_back(*g_it);
+//    //		}
+//    //		else{
+//    //			s_pattern.push_back(*g_it);
+//    //		}
+//    //	}
+//    //
+//    //	ret[ABSOLUTE] = a_pattern;
+//    //	ret[COMPLETE] = c_pattern;
+//    //	ret[SEMICOMPLETE] = s_pattern;
+//    return ret;
+//}
 
 bool
 KnowledgeBase::acceptable(Rule& src) {
@@ -2007,8 +1763,6 @@ KnowledgeBase::grounded_rules(Rule src) {
     std::map<PATTERN_TYPE, std::vector<PatternType> > patterns, patterns2;
 
     patterns = construct_grounding_patterns(src);
-    patterns2 = natural_construct_grounding_patterns(src);
-    exception_filter(patterns, patterns2);
 
     if (patterns[ABSOLUTE].size() == 0 && patterns[COMPLETE].size() == 0)
         return grounded_rules;
@@ -2029,7 +1783,7 @@ KnowledgeBase::grounded_rules(Rule src) {
         while (pat_it != patterns[COMPLETE].end()) {
             Rule grounded_rule;
             grounded_rule = src;
-            graund_with_pattern(grounded_rule, (*pat_it));
+            ground_with_pattern(grounded_rule, (*pat_it));
             grounded_rules.push_back(grounded_rule);
             pat_it++;
         }
@@ -2038,50 +1792,48 @@ KnowledgeBase::grounded_rules(Rule src) {
     return grounded_rules;
 }
 
-std::vector<Rule>
-KnowledgeBase::grounded_rules2(Rule src, std::vector<KnowledgeBase::PatternType>& all_patterns) {
-    RuleDBType grounded_rules;
-    std::map<PATTERN_TYPE, std::vector<PatternType> > patterns, natural_patterns;
-    std::vector<PatternType>::iterator nat_it;
-
-    patterns = construct_grounding_patterns(src);
-    natural_patterns = natural_construct_grounding_patterns(src);
-    exception_filter(patterns, natural_patterns);
-
-    if (patterns[ABSOLUTE].size() == 0 && patterns[COMPLETE].size() == 0)
-        return grounded_rules;
-
-    if (patterns[ABSOLUTE].size() != 0) {
-        std::vector<PatternType>::iterator it;
-        it = patterns[ABSOLUTE].begin();
-        nat_it = natural_patterns[ABSOLUTE].begin();
-
-        while (it != patterns[ABSOLUTE].end()) {
-            grounded_rules.push_back((*it).front());
-            all_patterns.push_back(*nat_it);
-            nat_it++;
-            it++;
-        }
-    }
-
-    if (patterns[COMPLETE].size() != 0) {
-        std::vector<PatternType>::iterator pat_it;
-        pat_it = patterns[COMPLETE].begin();
-        nat_it = natural_patterns[COMPLETE].begin();
-
-        while (pat_it != patterns[COMPLETE].end()) {
-            Rule grounded_rule;
-            grounded_rule = src;
-            graund_with_pattern(grounded_rule, (*pat_it));
-            grounded_rules.push_back(grounded_rule);
-            all_patterns.push_back(*nat_it);
-            nat_it++;
-            pat_it++;
-        }
-    }
-
-    return grounded_rules;
-}
+//std::vector<Rule>
+//KnowledgeBase::grounded_rules2(Rule src, std::vector<KnowledgeBase::PatternType>& all_patterns) {
+//    RuleDBType grounded_rules;
+//    std::map<PATTERN_TYPE, std::vector<PatternType> > patterns, natural_patterns;
+//    std::vector<PatternType>::iterator nat_it;
+//
+//    patterns = construct_grounding_patterns(src);
+//
+//    if (patterns[ABSOLUTE].size() == 0 && patterns[COMPLETE].size() == 0)
+//        return grounded_rules;
+//
+//    if (patterns[ABSOLUTE].size() != 0) {
+//        std::vector<PatternType>::iterator it;
+//        it = patterns[ABSOLUTE].begin();
+//        nat_it = natural_patterns[ABSOLUTE].begin();
+//
+//        while (it != patterns[ABSOLUTE].end()) {
+//            grounded_rules.push_back((*it).front());
+//            all_patterns.push_back(*nat_it);
+//            nat_it++;
+//            it++;
+//        }
+//    }
+//
+//    if (patterns[COMPLETE].size() != 0) {
+//        std::vector<PatternType>::iterator pat_it;
+//        pat_it = patterns[COMPLETE].begin();
+//        nat_it = natural_patterns[COMPLETE].begin();
+//
+//        while (pat_it != patterns[COMPLETE].end()) {
+//            Rule grounded_rule;
+//            grounded_rule = src;
+//            ground_with_pattern(grounded_rule, (*pat_it));
+//            grounded_rules.push_back(grounded_rule);
+//            all_patterns.push_back(*nat_it);
+//            nat_it++;
+//            pat_it++;
+//        }
+//    }
+//
+//    return grounded_rules;
+//}
 
 std::vector<Rule>
 KnowledgeBase::groundable_rules(Rule& src) {
@@ -2226,1440 +1978,18 @@ KnowledgeBase::logging_off(void) {
 }
 
 void
-KnowledgeBase::omissionA_on(void) {
+KnowledgeBase::omission_on(void) {
     OMISSION_FLAG = true;
-    OMISSION_A = true;
 }
 
 void
-KnowledgeBase::omissionA_off(void) {
+KnowledgeBase::omission_off(void) {
     OMISSION_FLAG = false;
-    OMISSION_A = false;
 }
-
-void
-KnowledgeBase::omissionB_on(void) {
-    OMISSION_FLAG = true;
-    OMISSION_B = true;
-}
-
-void
-KnowledgeBase::omissionB_off(void) {
-    OMISSION_FLAG = false;
-    OMISSION_B = false;
-}
-
-void
-KnowledgeBase::omissionC_on(void) {
-    OMISSION_FLAG = true;
-    OMISSION_C = true;
-}
-
-void
-KnowledgeBase::omissionC_off(void) {
-    OMISSION_FLAG = false;
-    OMISSION_C = false;
-}
-
-void
-KnowledgeBase::omissionD_on(void) {
-    OMISSION_FLAG = true;
-    OMISSION_D = true;
-}
-
-void
-KnowledgeBase::omissionD_off(void) {
-    OMISSION_FLAG = false;
-    OMISSION_D = false;
-}
-
 void
 KnowledgeBase::set_control(uint32_t FLAGS) {
     CONTROLS |= FLAGS;
 }
-
-Rule
-KnowledgeBase::fabricate_idx(Rule& src) {
-    if (!indexed) {
-        return fabricate(src);
-    }
-
-    //vectorize
-    std::vector<int> mean_vec;
-    for (int j = 0; j < src.internal.size(); j++) {
-        mean_vec[j] = src.internal[j].obj;
-    }
-
-    //std::cerr << ">>Use Indexing" << std::endl;
-    if ((*fabricate_index)[mean_vec][COMPLETE].size() != 0) {
-        int i = MT19937::irand() % (*fabricate_index)[mean_vec][COMPLETE].size();
-        return (*fabricate_index)[mean_vec][COMPLETE][i];
-    }
-    //std::cerr << ">>C" << std::endl;
-    
-    if ((*fabricate_index)[mean_vec][ABSOLUTE].size() != 0) {
-        int i = MT19937::irand() % (*fabricate_index)[mean_vec][ABSOLUTE].size();
-        return (*fabricate_index)[mean_vec][ABSOLUTE][i];
-    }
-    //std::cerr << ">>A" << std::endl;
-
-    if ((*fabricate_index)[mean_vec][SEMICOMPLETE].size() != 0) {
-        int i = MT19937::irand() % (*fabricate_index)[mean_vec][SEMICOMPLETE].size();
-        return (*fabricate_index)[mean_vec][SEMICOMPLETE][i];
-    }
-    //std::cerr << ">>S" << std::endl;
-
-    return (*fabricate_index)[mean_vec][RANDOM].front();
-}
-
-Rule
-KnowledgeBase::fabricate_idx_min(Rule& src) {
-    if (!indexed)
-        return fabricate_min_len(src);
-
-    std::vector<int> mean_vec;
-    for (int j = 0; j < src.internal.size(); j++) {
-        mean_vec[j] = src.internal[j].obj;
-    }
-
-    return (*fabricate_index)[mean_vec][SORTED_ALL].front();
-}
-
-void
-KnowledgeBase::indexer(std::vector<Rule>& meanings) {
-    //std::cerr << ">>In Indexing" << std::endl;
-    fabricate_index = boost::shared_ptr<IndexT>(new IndexT());
-
-    for (int i = 0; i < meanings.size(); i++) {
-        //get pattern
-        std::map<PATTERN_TYPE, std::vector<PatternType> > all_patterns, all_patterns2;
-        all_patterns = construct_grounding_patterns(meanings[i]);
-        all_patterns2 = natural_construct_grounding_patterns(meanings[i]);
-        exception_filter(all_patterns, all_patterns2);
-
-        //std::cerr << "A";
-        //vectorize
-        std::vector<int> mean_vec;
-        for (int j = 0; j < meanings[i].internal.size(); j++) {
-            mean_vec.push_back(meanings[i].internal[j].obj);
-        }
-
-
-        (*fabricate_index)[mean_vec] = boost::unordered_map<int, std::vector<Rule> >();
-        (*fabricate_index)[mean_vec][ABSOLUTE] = std::vector<Rule>();
-        (*fabricate_index)[mean_vec][COMPLETE] = std::vector<Rule>();
-        (*fabricate_index)[mean_vec][SEMICOMPLETE] = std::vector<Rule>();
-        (*fabricate_index)[mean_vec][RANDOM] = std::vector<Rule>();
-        (*fabricate_index)[mean_vec][SORTED_ALL] = std::vector<Rule>();
-
-
-
-        //まずAbsoluteをプッシュ
-        for (int k = 0; k < all_patterns[ABSOLUTE].size(); k++) {
-            (*fabricate_index)[mean_vec][ABSOLUTE].push_back(
-                    all_patterns[ABSOLUTE][k].front());
-            (*fabricate_index)[mean_vec][SORTED_ALL].push_back(
-                    all_patterns[ABSOLUTE][k].front());
-
-        }
-
-
-        //次にCompleteをグラウンドしてプッシュ
-        for (int j = 0; j < all_patterns[COMPLETE].size(); j++) {
-            Rule grounded_rule;
-            grounded_rule = meanings[i];
-            graund_with_pattern(grounded_rule, all_patterns[COMPLETE][j]);
-            (*fabricate_index)[mean_vec][COMPLETE].push_back(grounded_rule);
-            (*fabricate_index)[mean_vec][SORTED_ALL].push_back(grounded_rule);
-        }
-
-
-        //最後にインベンションしてプッシュ
-        for (int j = 0; j < all_patterns[SEMICOMPLETE].size(); j++) {
-            //completion
-            PatternType use_pattern;
-            PatternType::iterator it;
-
-            use_pattern = all_patterns[SEMICOMPLETE][j];
-
-            for (it = use_pattern.begin(); it != use_pattern.end(); it++) {
-                if ((*it).is_noun() && (*it).external.size() == 0) {
-                    ExType buzz;
-                    buzz = construct_buzz_word();
-                    (*it).external = buzz;
-                    break;
-                }
-            }
-
-            Rule grounded_rule;
-            grounded_rule = meanings[i];
-            graund_with_pattern(grounded_rule, use_pattern);
-            (*fabricate_index)[mean_vec][SEMICOMPLETE].push_back(grounded_rule);
-            (*fabricate_index)[mean_vec][SORTED_ALL].push_back(grounded_rule);
-        }
-
-        //最後にもし発話できないときランダムをプッシュ
-        if ((*fabricate_index)[mean_vec][ABSOLUTE].size() == 0
-                && (*fabricate_index)[mean_vec][COMPLETE].size() == 0
-                && (*fabricate_index)[mean_vec][SEMICOMPLETE].size() == 0) {
-            ExType ex;
-            ex = construct_buzz_word();
-
-            Rule grounded_rule;
-            grounded_rule = meanings[i];
-
-            grounded_rule.external = ex;
-            (*fabricate_index)[mean_vec][RANDOM].push_back(grounded_rule);
-            (*fabricate_index)[mean_vec][SORTED_ALL].push_back(grounded_rule);
-        }
-
-        std::sort(
-                (*fabricate_index)[mean_vec][SORTED_ALL].begin(),
-                (*fabricate_index)[mean_vec][SORTED_ALL].end(),
-                ExternalSizeSort()
-                );
-
-        //Rule minlen = (*fabricate_index)[mean_vec][SORTED_ALL].front();
-        //(*fabricate_index)[mean_vec][SORTED_ALL].clear();
-        //std::vector<Rule>((*fabricate_index)[mean_vec][SORTED_ALL]).swap((*fabricate_index)[mean_vec][SORTED_ALL]);
-        //(*fabricate_index)[mean_vec][SORTED_ALL].push_back(minlen);
-    }
-
-    indexed = true;
-    //std::cerr << "<<Out Indexing" << std::endl;
-}
-
-void
-KnowledgeBase::exception_filter(std::map<KnowledgeBase::PATTERN_TYPE, std::vector<KnowledgeBase::PatternType> >& target_all_patterns, std::map<KnowledgeBase::PATTERN_TYPE, std::vector<KnowledgeBase::PatternType> >& base_all_patterns) {
-    if (exception.size() > 0) {
-        std::vector<std::vector<Rule> >::iterator exception_it = exception.begin();
-        std::vector<PatternType>::iterator target_it;
-        std::vector<PatternType>::iterator base_it;
-        std::vector<PatternType> erase_list;
-        std::vector<PatternType>::iterator erase_list_it;
-        bool applied_exp;
-        for (; exception_it != exception.end(); exception_it++) {
-
-            applied_exp = false;
-
-            target_it = target_all_patterns[COMPLETE].begin();
-            base_it = base_all_patterns[COMPLETE].begin();
-            while (target_it != target_all_patterns[COMPLETE].end() && base_it != base_all_patterns[COMPLETE].end()&&(!applied_exp)) {
-
-                if ((*base_it) == (*exception_it)) {
-                    erase_list.push_back(*target_it);
-                    applied_exp = true;
-                }
-
-                target_it++;
-                base_it++;
-            }
-
-            target_it = target_all_patterns[ABSOLUTE].begin();
-            base_it = base_all_patterns[ABSOLUTE].begin();
-            while (target_it != target_all_patterns[ABSOLUTE].end() && base_it != base_all_patterns[ABSOLUTE].end()&&(!applied_exp)) {
-
-                if ((*base_it) == (*exception_it)) {
-                    erase_list.push_back(*target_it);
-                    applied_exp = true;
-                }
-
-                target_it++;
-                base_it++;
-            }
-
-            target_it = target_all_patterns[SEMICOMPLETE].begin();
-            base_it = base_all_patterns[SEMICOMPLETE].begin();
-            while (target_it != target_all_patterns[SEMICOMPLETE].end() && base_it != base_all_patterns[SEMICOMPLETE].end()&&(!applied_exp)) {
-
-                if ((*base_it) == (*exception_it)) {
-                    erase_list.push_back(*target_it);
-                    applied_exp = true;
-                }
-
-                target_it++;
-                base_it++;
-            }
-
-        }
-        erase_list_it = erase_list.begin();
-        for (; erase_list_it != erase_list.end(); erase_list_it++) {
-
-            //            std::cerr << "erase rules" << std::endl;
-            //std::cerr << erase_list_it << std::endl;
-
-            applied_exp = false;
-
-            for (int i = 0; i < target_all_patterns[COMPLETE].size(); i++) {
-                if (target_all_patterns[COMPLETE][i] == (*erase_list_it)) {
-                    target_all_patterns[COMPLETE].erase(target_all_patterns[COMPLETE].begin() + i);
-                    base_all_patterns[COMPLETE].erase(base_all_patterns[COMPLETE].begin() + i);
-                    applied_exp = true;
-                    break;
-                }
-            }
-
-            for (int i = 0; i < target_all_patterns[ABSOLUTE].size(); i++) {
-                if (target_all_patterns[ABSOLUTE][i] == (*erase_list_it)) {
-                    target_all_patterns[ABSOLUTE].erase(target_all_patterns[ABSOLUTE].begin() + i);
-                    base_all_patterns[ABSOLUTE].erase(base_all_patterns[ABSOLUTE].begin() + i);
-                    applied_exp = true;
-                    break;
-                }
-            }
-
-            for (int i = 0; i < target_all_patterns[SEMICOMPLETE].size(); i++) {
-                if (target_all_patterns[SEMICOMPLETE][i] == (*erase_list_it)) {
-                    target_all_patterns[SEMICOMPLETE].erase(target_all_patterns[SEMICOMPLETE].begin() + i);
-                    base_all_patterns[SEMICOMPLETE].erase(base_all_patterns[SEMICOMPLETE].begin() + i);
-                    applied_exp = true;
-                    break;
-                }
-            }
-
-        }
-    }
-}
-
-/*bool
-KnowledgeBase::omission(Rule& mean, KnowledgeBase::PatternType& ptn, KnowledgeBase::PatternType& res) {
-    KnowledgeBase::PatternType src, tmp_ptn;
-    Rule new_rule, tmp_rule, test = mean, min_lev_rule;
-    bool flag = true, changed = false, loop_flag = true;
-    int index = MT19937::irand(), size = ptn.size(), count = 0, add;
-    std::vector<int> check, omitted_log;
-    std::vector<Rule> kb_all, lev_rules;
-    std::vector<Rule>::iterator kb_all_it, lev_rules_it;
-    std::vector<Element> copy_EL, tmp_ev;
-    std::vector<Element>::iterator copy_EL_it;
-    double lev_tmp, min_lev;
-    std::vector<std::vector<Element> > edited_ev;
-
-    //        std::cout << "OMISSION" << std::endl;
-    //std::cout << "UTTERANCES COUNT : " << kb_all.size() << std::endl;
-    src = ptn;
-    //文字を抜く作業
-    if (OMISSION_A) { //抜けるだけ抜いてから次へ.レーベンシュタイン距離でランク付け
-        /*kb_all = utterances();
-        //        std::cout << "IN1" << std::endl;
-        if (size > 1) { //単語ルールがあれば
-            while ((count < (size - 1))) {// && flag) {
-                //                std::cout << "IN2" << std::endl;
-                //インデックスを決める作業
-                do {
-                    index = index % (size - 1) + 1;
-                } while ((std::find(check.begin(), check.end(), index) != check.end()));
-                //std::cout << "IN2.1" << std::endl;
-                check.push_back(index); //選ばれたインデックスを記憶
-                //                std::cout << src[index].to_s() << std::endl;
-                new_rule = src[index];
-                while (flag && omission_check(src[index])) {
-                    //                    std::cout << "IN3" << std::endl;
-                    //文字を抜く作業tmp_ruleに入れる. そのあと，srcに入れてground_with_patternで構築してtestに"省略"の一時的結果を返す
-                    //tmp_rule = src[index];
-                    //std::cout << tmp_rule.to_s() << std::endl;
-                    //                    for (int iii = 0; iii < src.size(); iii++) {
-                    //                        std::cout << src[iii].to_s() << std::endl;
-                    //                    }
-                    //if (tmp_rule.external.size() % 2 == 1)
-                    //    tmp_rule.external.erase(tmp_rule.external.begin() + (tmp_rule.external.size() - 1) / 2);
-                    //else {
-                    //    add = MT19937::irand() % 2; //真ん中より下か上かランダムに決定
-                    //    tmp_rule.external.erase(tmp_rule.external.begin() + (tmp_rule.external.size() / 2 - add));
-                    //}
-                    edited_ev = cut_out_letter(src[index].external);
-                    //std::cout << tmp_rule.to_s() << std::endl;
-                    src[index].external = edited_ev[0];
-                    //                    for (int iii = 0; iii < src.size(); iii++) {
-                    //                        std::cout << src[iii].to_s() << std::endl;
-                    //                    }
-                    tmp_ptn = src; //graund_with_patternでsrcが破壊されるのを防ぐ
-                    graund_with_pattern(test, tmp_ptn);
-                    //                    std::cout << src.size() << std::endl;
-                    //                    std::cout << test.to_s() << std::endl;
-                    //順位が一位か調べる作業flagに結果を返す
-                    min_lev_rule = test; //lev_rulesの中からひとつだけ選ぶ場合に使うけど，今は使わない
-                    min_lev = lev_tmp = Distance::levenstein2(test.external, (*kb_all.begin()).external);
-                    kb_all_it = kb_all.begin();
-                    for (; kb_all_it != kb_all.end(); kb_all_it++) {
-                        lev_tmp = Distance::levenstein2(test.external, (*kb_all_it).external); //testと*kb_all_itとのレーベンシュタイン距離
-                        if (min_lev > lev_tmp) {
-                            lev_rules.clear();
-                            lev_rules.push_back(*kb_all_it);
-                        } else if (min_lev == lev_tmp) {
-                            lev_rules.push_back(*kb_all_it);
-                        }
-                    }
-                    //                    std::cout << "IN3.1" << std::endl;
-                    //lev_rulesの中からmin_lev_ruleを選ぶ.（今回はすべて同じかを調べるため，min_lev_rulesは使わない）
-                    flag = true;
-                    lev_rules_it = lev_rules.begin();
-                    for (; lev_rules_it != lev_rules.end(); lev_rules_it++) {
-                        flag &= (test.internal == (*lev_rules_it).internal);
-                    }
-                    if (lev_rules.size() == 0) {
-                        flag = false;
-                    }
-                    //                    std::cout << "IN3.2" << std::endl;
-                    if (flag) {
-                        new_rule = tmp_rule;
-                        changed = true;
-                    }
-                    src[index] = new_rule; //srcに入れてたルールをもとに戻す or srcに新しいルールを入れる
-                    //                    std::cout << "IN3.3" << std::endl;
-                }
-                //                std::cout << "IN2.1" << std::endl;
-                //                for (int iii = 0; iii < src.size(); iii++) {
-                //                    std::cout << src[iii].to_s() << std::endl;
-                //                }
-                //                std::cout << src[index].to_s() << std::endl;
-                flag = true; //全ルールでomissionを行う
-                count += 1;
-            }
-        }
-        //文ルールの省略処理
-        if (flag) {
-            //            std::cout << "Initial rule " << src[0].to_s() << std::endl;
-            int location = 0, now_loc = 0;
-            tmp_rule = src[0];
-            new_rule = src[0];
-            for (int i = 0; i < size; i++) {
-                omitted_log.push_back(0);
-            }
-            while (location < size) {
-                flag = true;
-                //                std::cout << "Base rule " << new_rule.to_s() << std::endl;
-                while (flag) {
-                    now_loc = 0;
-                    loop_flag = true;
-                    copy_EL = tmp_rule.external;
-                    new_rule.external.clear();
-                    tmp_ev.clear();
-                    copy_EL_it = copy_EL.begin();
-                    for (; copy_EL_it != copy_EL.end(); copy_EL_it++) {
-                        //文字を抜く作業
-                        //最後の文字が終端記号ならtmp_evに追加
-                        if ((copy_EL_it == copy_EL.end() - 1)&&(*copy_EL_it).is_sym())
-                            tmp_ev.push_back(*copy_EL_it);
-                        //区切り文字はnullかカテゴリ
-                        if ((*copy_EL_it).is_cat() || (copy_EL_it == copy_EL.end() - 1)) {
-                            now_loc += 1;
-                            if (tmp_ev.size() != 0 && tmp_ev.size() > 2 && omitted_log[now_loc] != 1) {
-                                loop_flag = false;
-                                //                                if (tmp_ev.size() % 2 == 1)
-                                //                                    tmp_ev.erase(tmp_ev.begin() + (tmp_ev.size() - 1) / 2);
-                                //                                else {
-                                //                                    add = MT19937::irand() % 2; //真ん中より下か上かランダムに決定
-                                //                                    tmp_ev.erase(tmp_ev.begin() + (tmp_ev.size() / 2 - add));
-                                //                                }
-                                edited_ev = cut_out_letter(tmp_ev);
-                                tmp_ev = edited_ev[0];
-                            } else if ((copy_EL_it == (copy_EL.end() - 1))&&(*(copy_EL_it)).is_cat()) { //文字省略出来なくて最後の文字列だった場合（最後の文字列がnullだった場合は前の文字列が省略できなかったらサーチしてる場所を次へ移す．これは文ルールの文字省略の終了と同義）
-                                now_loc += 1;
-                            }
-                            if (tmp_ev.size() != 0)
-                                new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                            tmp_ev.clear();
-                            if ((!loop_flag)&&(*copy_EL_it).is_cat()) {
-                                new_rule.external.insert(new_rule.external.end(), copy_EL_it, copy_EL.end());
-                                break;
-                            } else if ((!loop_flag)) {
-                                break;
-                            } else if ((*copy_EL_it).is_cat()) {
-                                new_rule.external.push_back(*copy_EL_it);
-                            }
-                        } else {
-                            tmp_ev.push_back(*copy_EL_it);
-                        }
-                    }
-                    //                if(tmp_ev.size()!=0){
-                    //                    new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                    //                    tmp_ev.clear();
-                    //                }
-                    //                    std::cout << "Next rule " << new_rule.to_s() << std::endl;
-                    //                    std::cout << "TEST " << now_loc << std::endl;
-                    if (loop_flag) {
-                        flag = false;
-                    } else {
-                        //一位かどうか調べる
-                        src[0] = new_rule;
-                        graund_with_pattern(test, src); //ground_with_patternでsrcが破壊されないようにしたためsrcを直接使っても良い
-                        min_lev_rule = test; //lev_rulesの中からひとつだけ選ぶ場合に使うけど，今は使わない
-                        min_lev = Distance::levenstein2(test.external, (*kb_all.begin()).external);
-                        kb_all_it = kb_all.begin();
-                        for (; kb_all_it != kb_all.end(); kb_all_it++) {
-                            lev_tmp = Distance::levenstein2(test.external, (*kb_all_it).external); //testと*kb_all_itとのレーベンシュタイン距離
-                            if (min_lev > lev_tmp) {
-                                lev_rules.clear();
-                                lev_rules.push_back(*kb_all_it);
-                            } else if (min_lev == lev_tmp) {
-                                lev_rules.push_back(*kb_all_it);
-                            }
-                        }
-                        //                    std::cout << "IN3.1" << std::endl;
-                        //lev_rulesの中からmin_lev_ruleを選ぶ.（今回はすべて同じかを調べるため，min_lev_rulesは使わない）
-                        flag = true;
-                        lev_rules_it = lev_rules.begin();
-                        for (; lev_rules_it != lev_rules.end(); lev_rules_it++) {
-                            flag &= (test.internal == (*lev_rules_it).internal);
-                        }
-                        if (lev_rules.size() == 0) {
-                            flag = false;
-                        }
-                        //
-                        if (flag) {
-                            tmp_rule = new_rule;
-                        } else {
-                            src[0] = tmp_rule;
-                            new_rule = tmp_rule;
-                            omitted_log[now_loc] = 1; //これ以上省略できないという印
-                        }
-                    }
-                }
-                location = now_loc;
-            }
-
-        }
-//
-    } else if (OMISSION_B) {//省略処理をしたものを組み込んだ発話が, 他の発話の中でreplaceableなら, 省略できない
-        /*       kb_all = utterances();
-               bool replaceable, ematched, replaceable1, replaceable2;
-               int add2;
-               Rule tmp_rule2, new_rule2;
-               std::vector<Element> tmp_ev2;
-               //                std::cout << "IN1" << std::endl;
-               if (size > 1) { //単語ルールがあれば
-                   while ((count < (size - 1))) {// && flag) {
-                       //                                std::cout << "IN2" << std::endl;
-                       //インデックスを決める作業
-                       do {
-                           index = index % (size - 1) + 1;
-                       } while ((std::find(check.begin(), check.end(), index) != check.end()));
-                       //                std::cout << "IN2.1" << std::endl;
-                       check.push_back(index); //選ばれたインデックスを記憶
-                       //                std::cout << src[index].to_s() << std::endl;
-                       new_rule = src[index];
-                       while (flag && omission_check(src[index])) {
-                           //                    std::cout << "IN3" << std::endl;
-                           //文字を抜く作業tmp_ruleに入れる. そのあと，srcに入れてground_with_patternで構築してtestに"省略"の一時的結果を返す
-                           tmp_rule = src[index];
-                           //std::cout << tmp_rule.to_s() << std::endl;
-                           //                    for (int iii = 0; iii < src.size(); iii++) {
-                           //                        std::cout << src[iii].to_s() << std::endl;
-                           //                    }
-
-                           edited_ev = cut_out_letter(tmp_rule.external);
-                           if (edited_ev.size() == 1) {
-                               tmp_rule.external = edited_ev[0];
-                               src[index] = tmp_rule;
-                               tmp_ptn = src; //graund_with_patternでsrcが破壊されるのを防ぐ
-                               graund_with_pattern(test, tmp_ptn);
-                               //全発話文字列の中に文字省略後の文字列があればfalse, なければtrueをflagに代入
-                               replaceable = false;
-                               kb_all_it = kb_all.begin();
-                               while (kb_all_it != kb_all.end()) {
-                                   //ガード
-                                   if ((*kb_all_it).external.size() < test.external.size()) {
-                                       kb_all_it++;
-                                       continue; //while
-                                   }
-                                   int ex_limit;
-                                   ex_limit = (*kb_all_it).external.size() - test.external.size();
-                                   ematched = false;
-                                   for (int i = 0; !ematched && i <= ex_limit; i++) {
-                                       if (std::equal((*kb_all_it).external.begin() + i,
-                                               (*kb_all_it).external.begin() + i + test.external.size(),
-                                               test.external.begin())) {
-                                           ematched = true;
-                                           break;
-                                       }
-                                   }
-                                   //後処理
-                                   if (!ematched) { //外部言語列に一致部分無し
-                                       kb_all_it++;
-                                       continue; // while
-                                   } else {
-                                       replaceable = true;
-                                       break;
-                                   }
-                               }
-                           } else {
-                               tmp_rule2 = tmp_rule;
-                               tmp_rule.external = edited_ev[0];
-                               tmp_rule2.external = edited_ev[1];
-                               src[index] = tmp_rule;
-                               tmp_ptn = src; //graund_with_patternでsrcが破壊されるのを防ぐ
-                               graund_with_pattern(test, tmp_ptn);
-                               //全発話文字列の中に文字省略後の文字列があればfalse, なければtrueをflagに代入
-                               replaceable1 = false;
-                               kb_all_it = kb_all.begin();
-                               while (kb_all_it != kb_all.end()) {
-                                   //ガード
-                                   if ((*kb_all_it).external.size() < test.external.size()) {
-                                       kb_all_it++;
-                                       continue; //while
-                                   }
-                                   int ex_limit;
-                                   ex_limit = (*kb_all_it).external.size() - test.external.size();
-                                   ematched = false;
-                                   for (int i = 0; !ematched && i <= ex_limit; i++) {
-                                       if (std::equal((*kb_all_it).external.begin() + i,
-                                               (*kb_all_it).external.begin() + i + test.external.size(),
-                                               test.external.begin())) {
-                                           ematched = true;
-                                           break;
-                                       }
-                                   }
-                                   //後処理
-                                   if (!ematched) { //外部言語列に一致部分無し
-                                       kb_all_it++;
-                                       continue; // while
-                                   } else {
-                                       replaceable1 = true;
-                                       break;
-                                   }
-                               }
-                               src[index] = tmp_rule2;
-                               tmp_ptn = src; //graund_with_patternでsrcが破壊されるのを防ぐ
-                               graund_with_pattern(test, tmp_ptn);
-                               //全発話文字列の中に文字省略後の文字列があればfalse, なければtrueをflagに代入
-                               replaceable2 = false;
-                               kb_all_it = kb_all.begin();
-                               while (kb_all_it != kb_all.end()) {
-                                   //ガード
-                                   if ((*kb_all_it).external.size() < test.external.size()) {
-                                       kb_all_it++;
-                                       continue; //while
-                                   }
-                                   int ex_limit;
-                                   ex_limit = (*kb_all_it).external.size() - test.external.size();
-                                   ematched = false;
-                                   for (int i = 0; !ematched && i <= ex_limit; i++) {
-                                       if (std::equal((*kb_all_it).external.begin() + i,
-                                               (*kb_all_it).external.begin() + i + test.external.size(),
-                                               test.external.begin())) {
-                                           ematched = true;
-                                           break;
-                                       }
-                                   }
-                                   //後処理
-                                   if (!ematched) { //外部言語列に一致部分無し
-                                       kb_all_it++;
-                                       continue; // while
-                                   } else {
-                                       replaceable2 = true;
-                                       break;
-                                   }
-                               }
-                               replaceable = (replaceable1 || replaceable2);
-                           }
-                           flag = (!replaceable);
-                           //                                        std::cout << "IN3.2" << std::endl;
-                           if (flag) {
-                               new_rule = tmp_rule;
-                               changed = true;
-                           }
-                           src[index] = new_rule; //srcに入れてたルールをもとに戻す or srcに新しいルールを入れる
-                           //                                        std::cout << "IN3.3" << std::endl;
-                       }
-                       //                std::cout << "IN2.1" << std::endl;
-                       //                for (int iii = 0; iii < src.size(); iii++) {
-                       //                    std::cout << src[iii].to_s() << std::endl;
-                       //                }
-                       //                std::cout << src[index].to_s() << std::endl;
-                       flag = true; //全ルールでomissionを行う
-                       count += 1;
-                   }
-               }
-               //文ルールの省略処理
-               if (flag) {
-                   //            std::cout << "SENTENCE" << std::endl;
-                   //            std::cout << "Initial rule " << src[0].to_s() << std::endl;
-                   int location = 0, now_loc = 0;
-                   tmp_rule = src[0];
-                   new_rule = src[0];
-                   for (int i = 0; i < size; i++) {
-                       omitted_log.push_back(0);
-                   }
-                   while (location < size) {
-                       flag = true;
-                       //                std::cout << "Base rule " << new_rule.to_s() << std::endl;
-                       while (flag) {
-                           //                    std::cout << "TEST 7" << std::endl;
-                           now_loc = 0;
-                           loop_flag = true;
-                           copy_EL = tmp_rule.external;
-                           new_rule.external.clear();
-                           new_rule2.external.clear();
-                           tmp_ev.clear();
-                           copy_EL_it = copy_EL.begin();
-                           for (; copy_EL_it != copy_EL.end(); copy_EL_it++) {
-                               //                        std::cout << "TEST 8" << std::endl;
-                               //文字を抜く作業
-                               //最後の文字が終端記号ならtmp_evに追加
-                               if ((copy_EL_it == copy_EL.end() - 1)&&(*copy_EL_it).is_sym()) {
-                                   //                            std::cout << "TEST 9" << std::endl;
-                                   tmp_ev.push_back(*copy_EL_it);
-                               }
-                               //区切り文字はnullかカテゴリ
-                               if ((*copy_EL_it).is_cat() || (copy_EL_it == copy_EL.end() - 1)) {
-                                   //                            std::cout << "TEST 10" << std::endl;
-                                   now_loc += 1;
-                                   if (tmp_ev.size() != 0) {
-                                       if (!(tmp_ev.size() > 2 && omitted_log[now_loc] != 1)) {
-                                           //                                    std::cout << "TEST 11" << std::endl;
-                                           new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                                       }
-                                       if (tmp_ev.size() > 2 && omitted_log[now_loc] != 1) {
-                                           //                                    std::cout << "TEST 12" << std::endl;
-                                           loop_flag = false;
-                                           edited_ev = cut_out_letter(tmp_ev);
-                                           if (edited_ev.size() == 1) {
-                                               //                                        std::cout << "TEST 15" << std::endl;
-                                               tmp_ev = edited_ev[0];
-                                               new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                                           } else {
-                                               //                                        std::cout << "TEST 16" << std::endl;
-                                               tmp_ev2 = tmp_ev;
-                                               new_rule2 = new_rule;
-                                               tmp_ev = edited_ev[0];
-                                               tmp_ev2 = edited_ev[1];
-                                               //                                        std::cout << "TEST 19" << std::endl;
-                                               new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                                               new_rule2.external.insert(new_rule2.external.end(), tmp_ev2.begin(), tmp_ev2.end());
-                                               //                                        std::cout << "TEST 18" << std::endl;
-                                           }
-                                       } else if ((copy_EL_it == (copy_EL.end() - 1))&&(*(copy_EL_it)).is_cat()) { //文字省略出来なくて最後の文字列だった場合（最後の文字列がnullだった場合は前の文字列が省略できなかったらサーチしてる場所を次へ移す．これは文ルールの文字省略の終了と同義）
-                                           now_loc += 1;
-                                       }
-                                   } else if ((copy_EL_it == (copy_EL.end() - 1))&&(*(copy_EL_it)).is_cat()) {
-                                       now_loc += 1;
-                                   }
-                                   tmp_ev.clear();
-                                   //                            std::cout << "TEST 13" << std::endl;
-                                   if ((!loop_flag)&&(*copy_EL_it).is_cat()) {
-                                       new_rule.external.insert(new_rule.external.end(), copy_EL_it, copy_EL.end());
-                                       if (new_rule2.external.size() != 0) {
-                                           new_rule2.external.insert(new_rule2.external.end(), copy_EL_it, copy_EL.end());
-                                       }
-                                       break;
-                                   } else if ((!loop_flag)) {
-                                       break;
-                                   } else if ((*copy_EL_it).is_cat()) {
-                                       new_rule.external.push_back(*copy_EL_it);
-                                   }
-                               } else {
-                                   tmp_ev.push_back(*copy_EL_it);
-                               }
-                               //                        std::cout << "TEST 9" << std::endl;
-                           }
-                           //                if(tmp_ev.size()!=0){
-                           //                    new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                           //                    tmp_ev.clear();
-                           //                }
-                           //                    std::cout << "Next rule " << new_rule.to_s() << std::endl;
-                           //                    std::cout << "TEST " << now_loc << std::endl;
-                           if (loop_flag) {
-                               flag = false;
-                           } else {
-                               //省略が認められるかどうか判定(flagの中身を決める)
-                               if (new_rule2.external.size() == 0) {
-                                   //                            std::cout << "TEST 1" << std::endl;
-                                   src[0] = new_rule;
-                                   tmp_ptn = src; //graund_with_patternでsrcが破壊されるのを防ぐ
-                                   graund_with_pattern(test, tmp_ptn);
-                                   //全発話文字列の中に文字省略後の文字列があればfalse, なければtrueをflagに代入
-                                   replaceable = false;
-                                   kb_all_it = kb_all.begin();
-                                   while (kb_all_it != kb_all.end()) {
-                                       //ガード
-                                       if ((*kb_all_it).external.size() < test.external.size()) {
-                                           kb_all_it++;
-                                           continue; //while
-                                       }
-                                       int ex_limit;
-                                       ex_limit = (*kb_all_it).external.size() - test.external.size();
-                                       ematched = false;
-                                       for (int i = 0; !ematched && i <= ex_limit; i++) {
-                                           if (std::equal((*kb_all_it).external.begin() + i,
-                                                   (*kb_all_it).external.begin() + i + test.external.size(),
-                                                   test.external.begin())) {
-                                               ematched = true;
-                                               break;
-                                           }
-                                       }
-                                       //後処理
-                                       if (!ematched) { //外部言語列に一致部分無し
-                                           kb_all_it++;
-                                           continue; // while
-                                       } else {
-                                           replaceable = true;
-                                           break;
-                                       }
-                                   }
-                                   //                            std::cout << "TEST 3" << std::endl;
-                               } else {
-                                   //                            std::cout << "TEST 2" << std::endl;
-                                   src[0] = new_rule;
-                                   tmp_ptn = src; //graund_with_patternでsrcが破壊されるのを防ぐ
-                                   graund_with_pattern(test, tmp_ptn);
-                                   //全発話文字列の中に文字省略後の文字列があればfalse, なければtrueをflagに代入
-                                   replaceable1 = false;
-                                   kb_all_it = kb_all.begin();
-                                   while (kb_all_it != kb_all.end()) {
-                                       //ガード
-                                       if ((*kb_all_it).external.size() < test.external.size()) {
-                                           kb_all_it++;
-                                           continue; //while
-                                       }
-                                       int ex_limit;
-                                       ex_limit = (*kb_all_it).external.size() - test.external.size();
-                                       ematched = false;
-                                       for (int i = 0; !ematched && i <= ex_limit; i++) {
-                                           if (std::equal((*kb_all_it).external.begin() + i,
-                                                   (*kb_all_it).external.begin() + i + test.external.size(),
-                                                   test.external.begin())) {
-                                               ematched = true;
-                                               break;
-                                           }
-                                       }
-                                       //後処理
-                                       if (!ematched) { //外部言語列に一致部分無し
-                                           kb_all_it++;
-                                           continue; // while
-                                       } else {
-                                           replaceable1 = true;
-                                           break;
-                                       }
-                                   }
-                                   src[0] = new_rule2;
-                                   tmp_ptn = src; //graund_with_patternでsrcが破壊されるのを防ぐ
-                                   graund_with_pattern(test, tmp_ptn);
-                                   //全発話文字列の中に文字省略後の文字列があればfalse, なければtrueをflagに代入
-                                   replaceable2 = false;
-                                   kb_all_it = kb_all.begin();
-                                   while (kb_all_it != kb_all.end()) {
-                                       //ガード
-                                       if ((*kb_all_it).external.size() < test.external.size()) {
-                                           kb_all_it++;
-                                           continue; //while
-                                       }
-                                       int ex_limit;
-                                       ex_limit = (*kb_all_it).external.size() - test.external.size();
-                                       ematched = false;
-                                       for (int i = 0; !ematched && i <= ex_limit; i++) {
-                                           if (std::equal((*kb_all_it).external.begin() + i,
-                                                   (*kb_all_it).external.begin() + i + test.external.size(),
-                                                   test.external.begin())) {
-                                               ematched = true;
-                                               break;
-                                           }
-                                       }
-                                       //後処理
-                                       if (!ematched) { //外部言語列に一致部分無し
-                                           kb_all_it++;
-                                           continue; // while
-                                       } else {
-                                           replaceable2 = true;
-                                           break;
-                                       }
-                                   }
-                                   replaceable = (replaceable1 || replaceable2);
-                               }
-                               flag = (!replaceable);
-                               //                        std::cout << "TEST 5" << std::endl;
-                               //
-                               if (flag) {
-                                   tmp_rule = new_rule;
-                               } else {
-                                   src[0] = tmp_rule;
-                                   new_rule = tmp_rule;
-                                   omitted_log[now_loc] = 1; //これ以上省略できないという印
-                               }
-                               //                        std::cout << "TEST 6" << std::endl;
-                           }
-                       }
-                       location = now_loc;
-                   }
-                   //            std::cout << "SENTENCE FIN." << std::endl;
-
-               }/
-    } else if (OMISSION_C) {//単語を省略する．文ルールでは，単語を探す．知識にある全ルールにおいて，replaceableな文字列があれば省略できない．
-        //        std::cout << "OMISSION2" << std::endl;
-        //単語だけ省略
-        kb_all = rules();
-        bool replaceable, ematched, replaceable1, replaceable2;
-        int add2, target_index;
-        Rule tmp_rule2, new_rule2, base_rule;
-        std::vector<Element> tmp_ev2;
-        //                std::cout << "IN1" << std::endl;
-        if (size > 1) { //単語ルールがあれば
-            //            std::cout << "OMISSION3" << std::endl;
-            while ((count < (size - 1))) {// && flag) {
-                //                                                std::cout << "IN2" << std::endl;
-                //インデックスを決める作業
-                //do {
-                //    index = index % (size - 1) + 1;
-                //} while ((std::find(check.begin(), check.end(), index) != check.end()));
-
-                //                                std::cout << "IN2.2" << std::endl;
-                //check.push_back(index); //選ばれたインデックスを記憶
-                //                std::cout << src[index].to_s() << std::endl;
-                index = count + 1;
-                new_rule = src[index];
-                base_rule = src[index];
-                //target_indexを求める
-                add = 0; //カウンタとしてaddを利用
-                for (int mean_ind = 0; mean_ind < mean.internal.size(); mean_ind++) {
-                    if (src[0].internal[mean_ind].is_var()) {
-                        add += 1;
-                        if (index == add) {
-                            target_index = mean_ind;
-                            break;
-                        }
-                    }
-                }
-                while (flag && omission_check(src[index])) {
-                    //                    std::cout << "IN3" << std::endl;
-                    tmp_rule = src[index];
-                    edited_ev = cut_out_letter(tmp_rule.external);
-                    if (edited_ev.size() == 1) {
-                        //                        std::cout << "IN3.2" << std::endl;
-                        tmp_rule.external = edited_ev[0];
-                        replaceable = false;
-                        kb_all_it = kb_all.begin();
-                        while (kb_all_it != kb_all.end()) {
-                            //                            std::cout << "IN3.5" << std::endl;
-                            //ガード
-                            if ((*kb_all_it).external.size() < tmp_rule.external.size()) {
-                                kb_all_it++;
-                                continue; //while
-                            }
-                            //                            std::cout << "IN3.6" << std::endl;
-                            //                            std::cout << base_rule.to_s() << std::endl;
-                            //                            std::cout << (*kb_all_it).to_s() << std::endl;
-                            //                            std::cout << mean.internal[target_index].to_s() << std::endl;
-                            if ((*kb_all_it).is_noun() && base_rule.external == (*kb_all_it).external && (*kb_all_it).internal[0] == mean.internal[target_index]) {
-                                kb_all_it++;
-                                continue; //while
-                            }
-                            //                            std::cout << "IN3.7" << std::endl;
-                            int ex_limit;
-                            ex_limit = (*kb_all_it).external.size() - tmp_rule.external.size();
-                            ematched = false;
-                            for (int i = 0; !ematched && i <= ex_limit; i++) {
-                                if (std::equal((*kb_all_it).external.begin() + i,
-                                        (*kb_all_it).external.begin() + i + tmp_rule.external.size(),
-                                        tmp_rule.external.begin())) {
-                                    ematched = true;
-                                    break;
-                                }
-                            }
-                            //                            std::cout << "IN3.8" << std::endl;
-                            //後処理
-                            if (!ematched) { //外部言語列に一致部分無し
-                                kb_all_it++;
-                                continue; // while
-                            } else {
-                                replaceable = true;
-                                break;
-                            }
-                        }
-                    } else {
-                        //                        std::cout << "IN3.3" << std::endl;
-                        tmp_rule.external = edited_ev[0];
-                        tmp_rule2.external = edited_ev[1];
-                        kb_all_it = kb_all.begin();
-                        while (kb_all_it != kb_all.end()) {
-                            //ガード
-                            if ((*kb_all_it).external.size() < tmp_rule.external.size()) {
-                                kb_all_it++;
-                                continue; //while
-                            }
-                            if ((*kb_all_it).is_noun() && base_rule.external == (*kb_all_it).external && (*kb_all_it).internal[0] == mean.internal[target_index]) {
-                                kb_all_it++;
-                                continue; //while
-                            }
-                            int ex_limit;
-                            ex_limit = (*kb_all_it).external.size() - tmp_rule.external.size();
-                            ematched = false;
-                            for (int i = 0; !ematched && i <= ex_limit; i++) {
-                                if (std::equal((*kb_all_it).external.begin() + i,
-                                        (*kb_all_it).external.begin() + i + tmp_rule.external.size(),
-                                        tmp_rule.external.begin())) {
-                                    ematched = true;
-                                    break;
-                                }
-                            }
-                            //後処理
-                            if (!ematched) { //外部言語列に一致部分無し
-                                kb_all_it++;
-                                continue; // while
-                            } else {
-                                replaceable1 = true;
-                                break;
-                            }
-                        }
-                        kb_all_it = kb_all.begin();
-                        while (kb_all_it != kb_all.end()) {
-                            //ガード
-                            if ((*kb_all_it).external.size() < tmp_rule2.external.size()) {
-                                kb_all_it++;
-                                continue; //while
-                            }
-                            if ((*kb_all_it).is_noun() && base_rule.external == (*kb_all_it).external && (*kb_all_it).internal[0] == mean.internal[target_index]) {
-                                kb_all_it++;
-                                continue; //while
-                            }
-                            int ex_limit;
-                            ex_limit = (*kb_all_it).external.size() - tmp_rule2.external.size();
-                            ematched = false;
-                            for (int i = 0; !ematched && i <= ex_limit; i++) {
-                                if (std::equal((*kb_all_it).external.begin() + i,
-                                        (*kb_all_it).external.begin() + i + tmp_rule2.external.size(),
-                                        tmp_rule2.external.begin())) {
-                                    ematched = true;
-                                    break;
-                                }
-                            }
-                            //後処理
-                            if (!ematched) { //外部言語列に一致部分無し
-                                kb_all_it++;
-                                continue; // while
-                            } else {
-                                replaceable2 = true;
-                                break;
-                            }
-                        }
-                        replaceable = (replaceable1 || replaceable2);
-                    }
-                    //                    std::cout << "IN3.4" << std::endl;
-                    flag = (!replaceable);
-                    //                                        std::cout << "IN3.2" << std::endl;
-                    if (flag) {
-                        new_rule = tmp_rule;
-                        changed = true;
-                    }
-                    src[index] = new_rule; //srcに入れてたルールをもとに戻す or srcに新しいルールを入れる
-                    //                                                            std::cout << "IN3.1" << std::endl;
-                }
-                //                                std::cout << "IN2.1" << std::endl;
-                //                for (int iii = 0; iii < src.size(); iii++) {
-                //                    std::cout << src[iii].to_s() << std::endl;
-                //                }
-                //                std::cout << src[index].to_s() << std::endl;
-                flag = true; //全ルールでomissionを行う
-                count += 1;
-            }
-        }
-
-        //文ルールの省略処理
-        if (flag) {
-            //            std::cout << "OMISSION4" << std::endl;
-            //            std::cout << "SENTENCE" << std::endl;
-            //            std::cout << "Initial rule " << src[0].to_s() << std::endl;
-            int location = 0, now_loc = 0;
-            tmp_rule = src[0];
-            new_rule = src[0];
-            base_rule = src[0];
-            for (int i = 0; i < size; i++) {
-                omitted_log.push_back(0);
-            }
-            while (location < size) {
-                flag = true;
-                //                                std::cout << "Base rule " << new_rule.to_s() << std::endl;
-                while (flag) {
-                    //                                        std::cout << "TEST 7" << std::endl;
-                    now_loc = 0;
-                    loop_flag = true;
-                    copy_EL = tmp_rule.external;
-                    new_rule.external.clear();
-                    new_rule2.external.clear();
-                    tmp_ev.clear();
-                    copy_EL_it = copy_EL.begin();
-                    for (; copy_EL_it != copy_EL.end(); copy_EL_it++) {
-                        //                                                std::cout << "TEST 8" << std::endl;
-                        //文字を抜く作業
-                        //最後の文字が終端記号ならtmp_evに追加
-                        if ((copy_EL_it == copy_EL.end() - 1)&&(*copy_EL_it).is_sym()) {
-                            //                            std::cout << "TEST 9" << std::endl;
-                            tmp_ev.push_back(*copy_EL_it);
-                        }
-                        //区切り文字はnullかカテゴリ
-                        if ((*copy_EL_it).is_cat() || (copy_EL_it == copy_EL.end() - 1)) {
-                            //                            std::cout << "TEST 10" << std::endl;
-                            now_loc += 1;
-                            if (tmp_ev.size() != 0) {
-                                if (!(tmp_ev.size() > 2 && omitted_log[now_loc] != 1)) {
-                                    //                                    std::cout << "TEST 11" << std::endl;
-                                    new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                                }
-                                if (tmp_ev.size() > 2 && omitted_log[now_loc] != 1) {
-                                    //                                    std::cout << "TEST 12" << std::endl;
-                                    loop_flag = false;
-                                    edited_ev = cut_out_letter(tmp_ev);
-                                    if (edited_ev.size() == 1) {
-                                        //                                        std::cout << "TEST 15" << std::endl;
-                                        tmp_ev = edited_ev[0];
-                                        new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                                    } else {
-                                        //                                        std::cout << "TEST 16" << std::endl;
-                                        tmp_ev2 = tmp_ev;
-                                        new_rule2 = new_rule;
-                                        tmp_ev = edited_ev[0];
-                                        tmp_ev2 = edited_ev[1];
-                                        //                                        std::cout << "TEST 19" << std::endl;
-                                        new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                                        new_rule2.external.insert(new_rule2.external.end(), tmp_ev2.begin(), tmp_ev2.end());
-                                        //                                        std::cout << "TEST 18" << std::endl;
-                                    }
-                                } else if ((copy_EL_it == (copy_EL.end() - 1))&&(*(copy_EL_it)).is_cat()) { //文字省略出来なくて最後の文字列だった場合（最後の文字列がnullだった場合は前の文字列が省略できなかったらサーチしてる場所を次へ移す．これは文ルールの文字省略の終了と同義）
-                                    now_loc += 1;
-                                }
-                            } else if ((copy_EL_it == (copy_EL.end() - 1))&&(*(copy_EL_it)).is_cat()) {
-                                now_loc += 1;
-                            }
-                            tmp_ev.clear();
-                            //                            std::cout << "TEST 13" << std::endl;
-                            if ((!loop_flag)&&(*copy_EL_it).is_cat()) {
-                                new_rule.external.insert(new_rule.external.end(), copy_EL_it, copy_EL.end());
-                                if (new_rule2.external.size() != 0) {
-                                    new_rule2.external.insert(new_rule2.external.end(), copy_EL_it, copy_EL.end());
-                                }
-                                break;
-                            } else if ((!loop_flag)) {
-                                break;
-                            } else if ((*copy_EL_it).is_cat()) {
-                                new_rule.external.push_back(*copy_EL_it);
-                            }
-                        } else {
-                            tmp_ev.push_back(*copy_EL_it);
-                        }
-                        //                                                std::cout << "TEST 9" << std::endl;
-                    }
-                    //                if(tmp_ev.size()!=0){
-                    //                    new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                    //                    tmp_ev.clear();
-                    //                }
-                    //                    std::cout << "Next rule " << new_rule.to_s() << std::endl;
-                    //                                        std::cout << "TEST[loc] " << now_loc << std::endl;
-                    if (loop_flag) {
-                        flag = false;
-                    } else {
-                        //省略が認められるかどうか判定(flagの中身を決める)
-                        if (new_rule2.external.size() == 0) {
-                            //                                                        std::cout << "TEST 1" << std::endl;
-                            src[0] = new_rule;
-                            test = new_rule;
-                            //tmp_ptn = src; //graund_with_patternでsrcが破壊されるのを防ぐ
-                            //graund_with_pattern(test, tmp_ptn);
-                            //全発話文字列の中に文字省略後の文字列があればfalse, なければtrueをflagに代入
-                            replaceable = false;
-                            kb_all_it = kb_all.begin();
-                            while (kb_all_it != kb_all.end()) {
-                                //ガード
-                                if ((*kb_all_it).external.size() < test.external.size()) {
-                                    kb_all_it++;
-                                    continue; //while
-                                }
-                                if (base_rule == (*kb_all_it)) {
-                                    kb_all_it++;
-                                    continue; //while
-                                }
-                                int ex_limit;
-                                ex_limit = (*kb_all_it).external.size() - test.external.size();
-                                ematched = false;
-                                for (int i = 0; !ematched && i <= ex_limit; i++) {
-                                    if (std::equal((*kb_all_it).external.begin() + i,
-                                            (*kb_all_it).external.begin() + i + test.external.size(),
-                                            test.external.begin())) {
-                                        ematched = true;
-                                        break;
-                                    }
-                                }
-                                //後処理
-                                if (!ematched) { //外部言語列に一致部分無し
-                                    kb_all_it++;
-                                    continue; // while
-                                } else {
-                                    replaceable = true;
-                                    break;
-                                }
-                            }
-                            //                                                        std::cout << "TEST 3" << std::endl;
-                        } else {
-                            //                                                        std::cout << "TEST 2" << std::endl;
-                            src[0] = new_rule;
-                            test = new_rule;
-                            //tmp_ptn = src; //graund_with_patternでsrcが破壊されるのを防ぐ
-                            //graund_with_pattern(test, tmp_ptn);
-                            //全発話文字列の中に文字省略後の文字列があればfalse, なければtrueをflagに代入
-                            replaceable1 = false;
-                            kb_all_it = kb_all.begin();
-                            while (kb_all_it != kb_all.end()) {
-                                //ガード
-                                if ((*kb_all_it).external.size() < test.external.size()) {
-                                    kb_all_it++;
-                                    continue; //while
-                                }
-                                if (base_rule == (*kb_all_it)) {
-                                    kb_all_it++;
-                                    continue; //while
-                                }
-                                int ex_limit;
-                                ex_limit = (*kb_all_it).external.size() - test.external.size();
-                                ematched = false;
-                                for (int i = 0; !ematched && i <= ex_limit; i++) {
-                                    if (std::equal((*kb_all_it).external.begin() + i,
-                                            (*kb_all_it).external.begin() + i + test.external.size(),
-                                            test.external.begin())) {
-                                        ematched = true;
-                                        break;
-                                    }
-                                }
-                                //後処理
-                                if (!ematched) { //外部言語列に一致部分無し
-                                    kb_all_it++;
-                                    continue; // while
-                                } else {
-                                    replaceable1 = true;
-                                    break;
-                                }
-                            }
-                            src[0] = new_rule2;
-                            test = new_rule2;
-                            //tmp_ptn = src; //graund_with_patternでsrcが破壊されるのを防ぐ
-                            //graund_with_pattern(test, tmp_ptn);
-                            //全発話文字列の中に文字省略後の文字列があればfalse, なければtrueをflagに代入
-                            replaceable2 = false;
-                            kb_all_it = kb_all.begin();
-                            while (kb_all_it != kb_all.end()) {
-                                //ガード
-                                if ((*kb_all_it).external.size() < test.external.size()) {
-                                    kb_all_it++;
-                                    continue; //while
-                                }
-                                if (base_rule == (*kb_all_it)) {
-                                    kb_all_it++;
-                                    continue; //while
-                                }
-                                int ex_limit;
-                                ex_limit = (*kb_all_it).external.size() - test.external.size();
-                                ematched = false;
-                                for (int i = 0; !ematched && i <= ex_limit; i++) {
-                                    if (std::equal((*kb_all_it).external.begin() + i,
-                                            (*kb_all_it).external.begin() + i + test.external.size(),
-                                            test.external.begin())) {
-                                        ematched = true;
-                                        break;
-                                    }
-                                }
-                                //後処理
-                                if (!ematched) { //外部言語列に一致部分無し
-                                    kb_all_it++;
-                                    continue; // while
-                                } else {
-                                    replaceable2 = true;
-                                    break;
-                                }
-                            }
-                            replaceable = (replaceable1 || replaceable2);
-                        }
-                        flag = (!replaceable);
-                        //                        std::cout << "TEST 5" << std::endl;
-                        //
-                        if (flag) {
-                            tmp_rule = new_rule;
-                        } else {
-                            src[0] = tmp_rule;
-                            new_rule = tmp_rule;
-                            omitted_log[now_loc] = 1; //これ以上省略できないという印
-                        }
-                        //                                                std::cout << "TEST 6" << std::endl;
-                    }
-                }
-                location = now_loc;
-            }
-            //                        std::cout << "SENTENCE FIN." << std::endl;
-
-        }
-
-    } else if (OMISSION_D) {
-        //        std::cout << "OMISSION2" << std::endl;
-                //単語だけ省略
-                kb_all = rules();
-                bool replaceable, ematched, replaceable1, replaceable2;
-                int add2, target_index;
-                Rule tmp_rule2, new_rule2, base_rule;
-                std::vector<Element> tmp_ev2;
-                //                std::cout << "IN1" << std::endl;
-                if (size > 1) { //単語ルールがあれば
-        //            std::cout << "OMISSION3" << std::endl;
-                    while ((count < (size - 1))) {// && flag) {
-        //                                                std::cout << "IN2" << std::endl;
-                        //インデックスを決める作業
-                        do {
-                            index = index % (size - 1) + 1;
-                        } while ((std::find(check.begin(), check.end(), index) != check.end()));
-        //                                std::cout << "IN2.2" << std::endl;
-                        check.push_back(index); //選ばれたインデックスを記憶
-                        //                std::cout << src[index].to_s() << std::endl;
-                        new_rule = src[index];
-                        base_rule = src[index];
-                        //target_indexを求める
-                        add = 0; //カウンタとしてaddを利用
-                        for (int mean_ind = 0; mean_ind < mean.internal.size(); mean_ind++) {
-                            if (src[0].internal[mean_ind].is_var()) {
-                                add += 1;
-                                if (index == add) {
-                                    target_index = mean_ind;
-                                    break;
-                                }
-                            }
-                        }
-                        while (flag && omission_check(src[index])) {
-        //                    std::cout << "IN3" << std::endl;
-                            tmp_rule = src[index];
-                            edited_ev = cut_out_letter(tmp_rule.external);
-                            tmp_rule.external = edited_ev[0];
-                            //                                        std::cout << "IN3.2" << std::endl;
-                            if (flag) {
-                                new_rule = tmp_rule;
-                                changed = true;
-                            }
-                            src[index] = new_rule; //srcに入れてたルールをもとに戻す or srcに新しいルールを入れる
-        //                                                            std::cout << "IN3.1" << std::endl;
-                        }
-        //                                std::cout << "IN2.1" << std::endl;
-                        //                for (int iii = 0; iii < src.size(); iii++) {
-                        //                    std::cout << src[iii].to_s() << std::endl;
-                        //                }
-                        //                std::cout << src[index].to_s() << std::endl;
-                        flag = true; //全ルールでomissionを行う
-                        count += 1;
-                    }
-                }
-
-                //文ルールの省略処理
-                if (flag) {
-        //            std::cout << "OMISSION4" << std::endl;
-                    //            std::cout << "SENTENCE" << std::endl;
-                    //            std::cout << "Initial rule " << src[0].to_s() << std::endl;
-                    int location = 0, now_loc = 0;
-                    tmp_rule = src[0];
-                    new_rule = src[0];
-                    base_rule = src[0];
-                    for (int i = 0; i < size; i++) {
-                        omitted_log.push_back(0);
-                    }
-                    while (location < size) {
-                        flag = true;
-        //                                std::cout << "Base rule " << new_rule.to_s() << std::endl;
-                        while (flag) {
-        //                                        std::cout << "TEST 7" << std::endl;
-                            now_loc = 0;
-                            loop_flag = true;
-                            copy_EL = tmp_rule.external;
-                            new_rule.external.clear();
-                            new_rule2.external.clear();
-                            tmp_ev.clear();
-                            copy_EL_it = copy_EL.begin();
-                            for (; copy_EL_it != copy_EL.end(); copy_EL_it++) {
-        //                                                std::cout << "TEST 8" << std::endl;
-                                //文字を抜く作業
-                                //最後の文字が終端記号ならtmp_evに追加
-                                if ((copy_EL_it == copy_EL.end() - 1)&&(*copy_EL_it).is_sym()) {
-                                    //                            std::cout << "TEST 9" << std::endl;
-                                    tmp_ev.push_back(*copy_EL_it);
-                                }
-                                //区切り文字はnullかカテゴリ
-                                if ((*copy_EL_it).is_cat() || (copy_EL_it == copy_EL.end() - 1)) {
-                                    //                            std::cout << "TEST 10" << std::endl;
-                                    now_loc += 1;
-                                    if (tmp_ev.size() != 0) {
-                                        if (!(tmp_ev.size() > 2 && omitted_log[now_loc] != 1)) {
-                                            //                                    std::cout << "TEST 11" << std::endl;
-                                            new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                                        }
-                                        if (tmp_ev.size() > 2 && omitted_log[now_loc] != 1) {
-                                            //                                    std::cout << "TEST 12" << std::endl;
-                                            loop_flag = false;
-                                            edited_ev = cut_out_letter(tmp_ev);
-                                            if (edited_ev.size() == 1) {
-                                                //                                        std::cout << "TEST 15" << std::endl;
-                                                tmp_ev = edited_ev[0];
-                                                new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                                            } else {
-                                                //                                        std::cout << "TEST 16" << std::endl;
-                                                tmp_ev2 = tmp_ev;
-                                                new_rule2 = new_rule;
-                                                tmp_ev = edited_ev[0];
-                                                tmp_ev2 = edited_ev[1];
-                                                //                                        std::cout << "TEST 19" << std::endl;
-                                                new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                                                new_rule2.external.insert(new_rule2.external.end(), tmp_ev2.begin(), tmp_ev2.end());
-                                                //                                        std::cout << "TEST 18" << std::endl;
-                                            }
-                                        } else if ((copy_EL_it == (copy_EL.end() - 1))&&(*(copy_EL_it)).is_cat()) { //文字省略出来なくて最後の文字列だった場合（最後の文字列がnullだった場合は前の文字列が省略できなかったらサーチしてる場所を次へ移す．これは文ルールの文字省略の終了と同義）
-                                            now_loc += 1;
-                                        }
-                                    } else if ((copy_EL_it == (copy_EL.end() - 1))&&(*(copy_EL_it)).is_cat()) {
-                                        now_loc += 1;
-                                    }
-                                    tmp_ev.clear();
-                                    //                            std::cout << "TEST 13" << std::endl;
-                                    if ((!loop_flag)&&(*copy_EL_it).is_cat()) {
-                                        new_rule.external.insert(new_rule.external.end(), copy_EL_it, copy_EL.end());
-                                        if (new_rule2.external.size() != 0) {
-                                            new_rule2.external.insert(new_rule2.external.end(), copy_EL_it, copy_EL.end());
-                                        }
-                                        break;
-                                    } else if ((!loop_flag)) {
-                                        break;
-                                    } else if ((*copy_EL_it).is_cat()) {
-                                        new_rule.external.push_back(*copy_EL_it);
-                                    }
-                                } else {
-                                    tmp_ev.push_back(*copy_EL_it);
-                                }
-        //                                                std::cout << "TEST 9" << std::endl;
-                            }
-                            //                if(tmp_ev.size()!=0){
-                            //                    new_rule.external.insert(new_rule.external.end(), tmp_ev.begin(), tmp_ev.end());
-                            //                    tmp_ev.clear();
-                            //                }
-                            //                    std::cout << "Next rule " << new_rule.to_s() << std::endl;
-        //                                        std::cout << "TEST[loc] " << now_loc << std::endl;
-                            if (loop_flag) {
-                                flag = false;
-                            } else {
-                                src[0] = new_rule;
-                                test = new_rule;
-                                //省略が認められるかどうか判定(flagの中身を決める)
-                         
-                                //                        std::cout << "TEST 5" << std::endl;
-                                //
-                                if (flag) {
-                                    tmp_rule = new_rule;
-                                } else {
-                                    src[0] = tmp_rule;
-                                    new_rule = tmp_rule;
-                                    omitted_log[now_loc] = 1; //これ以上省略できないという印
-                                }
-        //                                                std::cout << "TEST 6" << std::endl;
-                            }
-                        }
-                        location = now_loc;
-                    }
-        //                        std::cout << "SENTENCE FIN." << std::endl;
-
-                }*
-
-    }
-    res = src;
-
-    return changed;
-}*/
 
 std::vector<Rule>
 KnowledgeBase::utterances(void) {
@@ -3682,7 +2012,6 @@ KnowledgeBase::utterances(void) {
 
 bool
 KnowledgeBase::clipping(Rule& mean, KnowledgeBase::PatternType& ptn, KnowledgeBase::PatternType& res) {
-//    std::cerr << "HHHHHHHHHHHH" << std::endl;
     KnowledgeBase::PatternType src;
     Rule new_rule, tmp_rule, base_rule;
     bool changed = false, clipped, replaceable, sym_flag;
@@ -3703,7 +2032,6 @@ KnowledgeBase::clipping(Rule& mean, KnowledgeBase::PatternType& ptn, KnowledgeBa
 
             ptn_index = count + 1;
             if (src[ptn_index].external.size() > 1) {
-//                std::cerr << "JJJJJJJJJJJ" << std::endl;
                 clipped = false;
                 new_rule = src[ptn_index];
                 base_rule = src[ptn_index];
@@ -3770,7 +2098,6 @@ KnowledgeBase::clipping(Rule& mean, KnowledgeBase::PatternType& ptn, KnowledgeBa
             }
         }
     }
-//std::cerr << "IIIIIIII" << std::endl;
     //文の省略
     term_strings = recognize_terminal_strings(src[0]);
     term_strings_it = term_strings.begin();
@@ -3989,7 +2316,7 @@ int main(int arg, char **argv) {
     Rule input1, input2;
     try {
         //kb2.set_seed(11111111);
-        MT19937::irand.engine().seed(11111111);
+        MT19937::set_seed(11111111);
         input1 = Rule(std::string("S hoge hoge hoge -> d"));
     } catch (const char* msg) {
         std::cout << "ERR:" << msg << std::endl;

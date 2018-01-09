@@ -1,8 +1,8 @@
 /*
  * LogBox.cpp
  *
- *  Created on: 2011/06/18
- *      Author: Rindow
+ *  Created on: 2012/12/18
+ *      Author: Hiroki Sudo
  */
 
 #include "LogBox.h"

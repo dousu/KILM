@@ -1,8 +1,8 @@
 /*
  * Rule.h
  *
- *  Created on: 2011/05/18
- *      Author: Rindow
+ *  Created on: 2012/11/18
+ *      Author: Hiroki Sudo
  */
 
 #ifndef RULE_H_

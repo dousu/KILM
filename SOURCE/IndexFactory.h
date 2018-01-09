@@ -1,8 +1,8 @@
 /*
- * CategoryFactory.h
+ * IndexßFactory.h
  *
- *  Created on: 2011/05/20
- *      Author: Rindow
+ *  Created on: 2012/11/20
+ *      Author: Hiroki Sudo
  */
 
 #ifndef INDEXFACTORY_H_

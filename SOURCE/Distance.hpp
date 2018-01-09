@@ -1,8 +1,8 @@
 /*!
  * Distance.h
  *
- *  Created on: 2011/06/29
- *  \author Shingo Hagiwara
+ *  Created on: 2012/12/29
+ *  \author Hiroki Sudo
  *
  */
 
@@ -46,7 +46,6 @@ double levenstein(std::vector<E> ex1, std::vector<E> ex2) {
 	row_size = ex1.size() + 1;
 	col_size = ex2.size() + 1;
 
-	//		std::cerr << row_size << "," << col_size << std::endl;
 	matrix.resize(row_size, col_size);
 
 	for (int j = 0; j < col_size; j++) {
@@ -78,14 +77,10 @@ double levenstein(std::vector<E> ex1, std::vector<E> ex2) {
 			cost = cost2 < cost ? cost2 : cost;
 			cost = cost3 < cost ? cost3 : cost;
 
-			//				std::cerr << "now" << y << "," << x << std::endl;
-			//				std::cerr << "MAX" << matrix.size1() << "," << matrix.size2() << std::endl;
 			matrix(y, x) = cost;
 		}
 	}
 
-	//		std::cerr << matrix << std::endl;
-	//		std::cerr << matrix(matrix.size1()-1, matrix.size2()-1) << std::endl;
 	int len;
 	if (row_size > col_size)
 		len = row_size;
@@ -96,6 +91,9 @@ double levenstein(std::vector<E> ex1, std::vector<E> ex2) {
 			/ (static_cast<double>(len));
 }
 
+/*!
+ * Vectorインスタンスの要素数で割らないため，値は0~無限となるLevenstein距離
+ */
 template<class E>
 double levenstein2(std::vector<E> ex1, std::vector<E> ex2) {
     
@@ -113,7 +111,6 @@ double levenstein2(std::vector<E> ex1, std::vector<E> ex2) {
 	row_size = ex1.size() + 1;
 	col_size = ex2.size() + 1;
 
-	//		std::cerr << row_size << "," << col_size << std::endl;
 	matrix.resize(row_size, col_size);
 
 	for (int j = 0; j < col_size; j++) {
@@ -145,14 +142,10 @@ double levenstein2(std::vector<E> ex1, std::vector<E> ex2) {
 			cost = cost2 < cost ? cost2 : cost;
 			cost = cost3 < cost ? cost3 : cost;
 
-			//				std::cerr << "now" << y << "," << x << std::endl;
-			//				std::cerr << "MAX" << matrix.size1() << "," << matrix.size2() << std::endl;
 			matrix(y, x) = cost;
 		}
 	}
 
-	//		std::cerr << matrix << std::endl;
-	//		std::cerr << matrix(matrix.size1()-1, matrix.size2()-1) << std::endl;
 	int len;
 	if (row_size > col_size)
 		len = row_size;
@@ -174,7 +167,9 @@ int snake(int k, int y, std::vector<E >& ary1, std::vector<E >& ary2, int m, int
 
 	return y;
 }
-
+/*!
+ * O(np)法の実装
+ */
 template<class E>
 double onp_lv(std::vector<E>& ary1, std::vector<E>& ary2, double limit = -1) {
 	std::vector<E> temp;
@@ -264,5 +259,5 @@ double hamming(std::vector<E> ex1, std::vector<E> ex2){
 }
 
 } /*Distance*/
-} /*LEILA*/
+}
 #endif /* DISTANCE_H_ */

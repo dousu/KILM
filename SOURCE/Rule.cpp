@@ -1,8 +1,8 @@
 /*
  * Rule.cpp
  *
- *  Created on: 2011/05/18
- *      Author: Rindow
+ *  Created on: 2012/11/18
+ *      Author: Hiroki Sudo
  */
 #include "Rule.h"
 
@@ -346,7 +346,7 @@ int main(int arg, char** argv) {
         cat.push_back(elm);
       }
       break;
-      case ELEM_TYPE::IND_TYPE :
+      case ELEM_TYPE::MEAN_TYPE :
       for(unsigned int i=0;i<Element::dic.individual.size();i++) {
         elm.set_ind(i);
         ind.push_back(elm);

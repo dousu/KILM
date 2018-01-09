@@ -1,8 +1,8 @@
 /*
  * Element.cpp
  *
- *  Created on: 2011/05/19
- *      Author: Rindow
+ *  Created on: 2012/11/19
+ *      Author: Hiroki Sudo
  */
 
 #include "Element.h"
@@ -35,7 +35,7 @@ bool Element::operator==(const Element& dst) const{
 	case ELEM_TYPE::VAR_TYPE:
 		if(obj == dst.obj) return true;
 		break;
-	case ELEM_TYPE::IND_TYPE:
+	case ELEM_TYPE::MEAN_TYPE:
 		if(obj == dst.obj) return true;
 		break;
 	case ELEM_TYPE::SYM_TYPE:
@@ -77,7 +77,7 @@ bool Element::operator<(const Element& dst) const{
 			return false;
 
 		break;
-	case ELEM_TYPE::IND_TYPE:
+	case ELEM_TYPE::MEAN_TYPE:
 		if(obj < dst.obj)
 			return true;
 		else if(obj > dst.obj)
@@ -122,7 +122,7 @@ std::string Element::to_s(void){
 				boost::lexical_cast<std::string>(obj);
 		break;
 
-	case ELEM_TYPE::IND_TYPE :
+	case ELEM_TYPE::MEAN_TYPE :
 		if(dictionary.individual.find(obj) == dictionary.individual.end()){
 			return "-";
 		}
@@ -161,7 +161,7 @@ Element& Element::set_var(int var, int cat){
 Element& Element::set_ind(int id){
 	if(dictionary.individual.find(id) == dictionary.individual.end())
 		throw "range over for individual";
-	return set(ELEM_TYPE::IND_TYPE, id, 0);
+	return set(ELEM_TYPE::MEAN_TYPE, id, 0);
 }
 
 Element& Element::set_sym(int id){
@@ -186,7 +186,7 @@ bool Element::is_cat(void) const {
 	else return false;
 }
 bool Element::is_ind(void) const {
-	if(type == ELEM_TYPE::IND_TYPE) return true;
+	if(type == ELEM_TYPE::MEAN_TYPE) return true;
 	else return false;
 }
 bool Element::is_sym(void) const {
@@ -212,7 +212,7 @@ int main(int arg, char** argv){
 				elements.push_back(elm);
 			}
 			break;
-		case ELEM_TYPE::IND_TYPE:
+		case ELEM_TYPE::MEAN_TYPE:
 			for(unsigned int i=0;i<Element::dictionary.individual.size();i++){
 				elm.set_ind(i);
 				elements.push_back(elm);
@@ -252,24 +252,10 @@ int main(int arg, char** argv){
 		k=0;
 		while (it2 != elements.end()){
 			if(*it1 == *it2){
-//				std::cout << "*************************************" <<std::endl;
-
-				//if(j != 28 && k != 28){
-					std::cout << j << " : " << k << " ";
-					std::cout << (*it1).to_s();
-					std::cout << " = " ;
-					std::cout << (*it2).to_s() << std::endl;
-				//}
-				/*
-				 * なぜかElement28番のto_sがおかしい……
-				 * 比較はできているようだから、とりあえずスルー
-				 * */
-				/*
-				if(elements[28] == *it1){
-					std::cout << (*(it1)).to_s() << "::::::::::::" << elements[28].to_s() << "???" << std::endl;
-				}
-				*/
-
+				std::cout << j << " : " << k << " ";
+				std::cout << (*it1).to_s();
+				std::cout << " = " ;
+				std::cout << (*it2).to_s() << std::endl;
 			}
 			k++;
 			it2++;
@@ -277,9 +263,6 @@ int main(int arg, char** argv){
 		j++;
 		it1++;
 	}
-
-	it = elements.begin();
-	std::cout << elements[28].to_s() << std::endl;
 
 	elements2 = elements;
 	it = elements2.begin();

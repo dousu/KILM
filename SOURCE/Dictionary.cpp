@@ -1,8 +1,8 @@
 /*
  * Dictionary.cpp
  *
- *  Created on: 2011/05/23
- *      Author: Rindow
+ *  Created on: 2012/11/23
+ *      Author: Hiroki Sudo
  */
 
 #include "Dictionary.h"
@@ -22,10 +22,8 @@ std::map<std::string, int> Dictionary::conv_symbol;
 //}
 
 void
-//Dictionary::load(boost::filesystem::path file_path) {
 Dictionary::load(std::string& file_path) {
   std::string line;
-  //boost::filesystem::ifstream source(file_path);
   std::ifstream source(file_path.c_str());
 
   //read test
@@ -54,7 +52,7 @@ Dictionary::load(std::string& file_path) {
           boost::algorithm::token_compress_on);
     }
     else {
-//			throw "unknown key";
+			throw "unknown key";
     }
   }
 

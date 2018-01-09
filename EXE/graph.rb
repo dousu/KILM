@@ -17,7 +17,6 @@ def graphILM(filelist)
   end
   
   IO.popen("/usr/bin/gnuplot","w") do |gp|
-  
     gp.puts('set xl"Generation"')
     gp.puts('set terminal "wxt"')
     flag=false
@@ -110,24 +109,6 @@ def graphILM(filelist)
     gp.puts("set terminal postscript #{$PSTSCRPT_POINT} eps enhanced color")
     gp.puts("set output \"#{$BASE_DIR}language_distance.eps\"")
     gp.puts('replot')
-  
-    gp.puts('set terminal "wxt"')
-    flag=false
-    filelist.each do |file|
-      title=file.split("/")[-1].split(".")[0]
-      if flag
-        gp.puts("replot \"#{file}\" using 1:7 w l title \'#{title}\'")
-      else
-        gp.puts("plot \"#{file}\" using 1:7 w l title \'#{title}\'")
-        flag=true
-      end
-    end
-    gp.puts("set xr[0:#{$MAX_GEN}]")
-    gp.puts("set yr[0:*]")
-    gp.puts("set yl\"Number of characters in a utterance\"")
-    gp.puts("set terminal postscript #{$PSTSCRPT_POINT} eps enhanced color")
-    gp.puts("set output \"#{$BASE_DIR}number_utterance_words.eps\"")
-    gp.puts('replot')
 
     gp.puts('set terminal "wxt"')
     flag=false
@@ -158,7 +139,7 @@ $MAX_GEN=100
 $MAX_EXP=100
 $MAX_NUM=100
 $MAX_DIST=1
-$BASE_DIR="~/Desktop/"
+$BASE_DIR="../RESULT/"
 $PSTSCRPT_POINT=20
 $PREFIX=ARGV[0]
 

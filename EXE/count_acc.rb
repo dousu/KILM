@@ -142,9 +142,9 @@ def outputCOUNTINGbox
 end
 
 $ITERATEnum=100
-$msilm="../LEILA/msilm.exe"
-$dictionary="../LEILA/data.dic"
-$THREADnum=10
+$msilm="../SOURCE/kilm.exe"
+$dictionary="../SOURCE/data.dic"
+$THREADnum=5
 $RESULTbox=Hash.new
 $COUNTINGbox=Array.new
 countProcess(ARGV)

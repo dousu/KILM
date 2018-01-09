@@ -1,8 +1,8 @@
 /*
- * Parameters2.cpp
+ * Parameters.cpp
  *
- *  Created on: 2011/06/24
- *      Author: rindou
+ *  Created on: 2012/12/24
+ *      Author: Hiroki Sudo
  */
 
 #include "Parameters.h"
@@ -10,16 +10,18 @@
 Parameters::Parameters() {
   time_t now;
   time(&now);
-  std::string date_str = boost::lexical_cast<std::string>(now);
+  struct tm *stm = localtime(&now);
+  char s[100];
+  strftime(s,100,"%Yy%mm%dd%Hh%Mm%Ss",stm);
+  std::string date_str = boost::lexical_cast<std::string>(s);
 
   //initialization with default value
   MAX_GENERATIONS = 100;
-  PER_UTTERANCES = 0.8;
+  PER_UTTERANCES = 0.5;
   RANDOM_SEED = 101010;
   UNIQUE_UTTERANCE = false;
   SAVE_FORMAT = BIN;
   ANALYZE = false;
-  //DICTIONARY_FILE     = boost::filesystem::path("data.dic");
   DICTIONARY_FILE = "data.dic";
   buzz_length = 3;
 
@@ -28,14 +30,15 @@ Parameters::Parameters() {
   RESUME = false;
   SAVE_LAST_STATE = false;
   SAVE_ALL_STATE = false;
+  OMISSION = false;
 
-  FILE_PREFIX = "LEKA_";
+  FILE_PREFIX = "KILM_";
   DATE_STR = date_str;
   STATE_EXT = ".st";
   RESULT_EXT = ".rst";
   LOG_EXT = ".log";
 
-  BASE_PATH = "./";
+  BASE_PATH = "../RESULT/";
   SAVE_FILE = (FILE_PREFIX + DATE_STR + STATE_EXT);
   RESULT_FILE = (FILE_PREFIX + DATE_STR + RESULT_EXT);
   RESUME_FILE = (FILE_PREFIX + DATE_STR + STATE_EXT);
@@ -64,22 +67,14 @@ Parameters::set_option(boost::program_options::variables_map& vm) {
   if (vm.count("prefix")) {
     FILE_PREFIX = vm["prefix"].as<std::string>();
 
-    SAVE_FILE = (FILE_PREFIX + DATE_STR + ".st");
-    RESULT_FILE = (FILE_PREFIX + DATE_STR + ".rs");
-    RESUME_FILE = (FILE_PREFIX + DATE_STR + ".st");
-    LOG_FILE = (FILE_PREFIX + DATE_STR + ".log");
+    SAVE_FILE = (FILE_PREFIX + DATE_STR + STATE_EXT);
+    RESULT_FILE = (FILE_PREFIX + DATE_STR + RESULT_EXT);
+    RESUME_FILE = (FILE_PREFIX + DATE_STR + STATE_EXT);
+    LOG_FILE = (FILE_PREFIX + DATE_STR + LOG_EXT);
   }
 
   if (vm.count("path")) {
     BASE_PATH = (vm["path"].as<std::string>());
-    /*
-     if (!boost::filesystem::exists(BASE_PATH)) {
-     if (!boost::filesystem::create_directories(BASE_PATH)) {
-     std::cerr << "Cannot create base directory" << std::endl;
-     throw "Cannot create base directory";
-     }
-     }
-     */
   }
 
   //Set option values
@@ -93,6 +88,10 @@ Parameters::set_option(boost::program_options::variables_map& vm) {
 
   if (vm.count("utterances")) {
     PER_UTTERANCES = vm["utterances"].as<double>();
+  }
+
+  if (vm.count("omission")) {
+	  OMISSION = true;
   }
 
   if (vm.count("analyze")) {
@@ -125,20 +124,6 @@ Parameters::set_option(boost::program_options::variables_map& vm) {
   }
 
   if (vm.count("logging")) {
-//		std::vector<std::string> args;
-//		args = vm["logging"].as<std::vector< std::string > >();
-
-//		if(args.size() > 0){
-//			std::cerr << args[0] << std::endl;
-//			LOG_FILE = boost::filesystem::path(FILE_PREFIX+LOG_EXT);
-
-    /*
-     if (boost::filesystem::exists(BASE_PATH / LOG_FILE)) {
-     boost::filesystem::ofstream log_eraese(BASE_PATH / LOG_FILE,
-     std::ios::out | std::ios::trunc);
-     }
-     */
-
     LOGGING = true;
   }
 
@@ -148,13 +133,6 @@ Parameters::set_option(boost::program_options::variables_map& vm) {
 
     if (args.size() > 0) {
       RESUME_FILE = args.front();
-
-      /*
-      if (!boost::filesystem::exists(BASE_PATH / RESUME_FILE)) {
-        std::cerr << "Cannot open state file" << std::endl;
-        exit(0);
-      }
-      */
     }
 
     RESUME = true;

@@ -1,8 +1,8 @@
 /*
  * Element.h
  *
- *  Created on: 2011/05/19
- *      Author: Rindow
+ *  Created on: 2012/11/19
+ *      Author: Hiroki Sudo
  */
 
 #ifndef ELEMENT_H_
@@ -29,7 +29,7 @@ namespace ELEM_TYPE {
     //!変数:内部言語の非終端記号
     const int VAR_TYPE = 2;
     //!対象:内部言語の終端記号
-    const int IND_TYPE = 3;
+    const int MEAN_TYPE = 3;
 }
 
 //型

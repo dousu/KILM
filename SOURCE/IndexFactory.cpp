@@ -1,13 +1,11 @@
 /*
- * CategoryFactory.cpp
+ * IndexFactory.cpp
  *
- *  Created on: 2011/05/20
- *      Author: Rindow
+ *  Created on: 2012/11/20
+ *      Author: Hiroki Sudo
  */
 
 #include "IndexFactory.h"
-
-//unsigned int IndexFactory::index_counter = 0;
 
 IndexFactory& IndexFactory::operator=(const IndexFactory& dst){
 	index_counter = dst.index_counter;

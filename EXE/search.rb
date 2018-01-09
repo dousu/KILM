@@ -56,10 +56,10 @@ def exe_search(name,th_num,arg)
   if arg_analyzer(arg,file,seed,gen)
     puts name
     $checkCount+=1
-  end  
+  end
 
-  #puts file.to_s #->[["#RESULT"], ["BASIC", "41", "87", "23", "29"], ["SDISTM", "0.23221"], ["WDIST", "0"], ["#RESULT"], ["BASIC", "40", "89", "26", "17"], ["SDISTM", "0.285659"], ["WDIST", "0"]]
-  #$RESULTbox[key]=[file[1][2].to_f,file[1][3].to_f,file[1][4].to_f,file[1][3].to_f+file[1][4].to_f,file[2][1].to_f,file[3][1].to_f,file[5][2].to_f,file[5][3].to_f,file[5][4].to_f,file[5][3].to_f+file[5][4].to_f,file[6][1].to_f,file[7][1].to_f]
+  #puts file.to_s #->[["#RESULT"], ["BASIC", "41", "87", "23", "29"], ["SDISTM", "0.23221"], ["#RESULT"], ["BASIC", "40", "89", "26", "17"], ["SDISTM", "0.285659"]]
+  #$RESULTbox[key]=[file[1][2].to_f,file[1][3].to_f,file[1][4].to_f,file[1][3].to_f+file[1][4].to_f,file[2][1].to_f,file[4][2].to_f,file[4][3].to_f,file[4][4].to_f,file[4][3].to_f+file[4][4].to_f,file[5][1].to_f]
 end
 def arg_analyzer(arg,filedata,seed,gen)
   count=0
@@ -76,8 +76,6 @@ def arg_analyzer(arg,filedata,seed,gen)
       flag=(flag and operation(filedata[1][3].to_i+filedata[1][4].to_i,arg[count+2].to_i,arg[count+1]))
     when "sdist"
       flag=(flag and operation(filedata[2][1].to_i,arg[count+2].to_i,arg[count+1]))
-    when "wdist"
-      flag=(flag and operation(filedata[3][1].to_i,arg[count+2].to_i,arg[count+1]))
     when "gen"
       flag=(flag and operation(gen.to_i,arg[count+2].to_i,arg[count+1]))
     when "rnd"
@@ -111,13 +109,10 @@ def operation(val1,val2,operator)
 end
 
 $ITERATEnum=100
-$msilm="../LEILA/msilm.exe"
-$dictionary="../LEILA/data.dic"
-$THREADnum=10
+$msilm="../SOURCE/kilm.exe"
+$dictionary="../SOURCE/data.dic"
+$THREADnum=5
 $checkCount=0;
-#puts ARGV
-#puts ARGV[1].split(" ")
-#exit(-1)
 searchProcess(ARGV)
 puts "end"
 

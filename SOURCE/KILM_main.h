@@ -1,13 +1,12 @@
-/* 
- * File:   CM_main.h
- * Author: hiroki
+/*
+ * kirby_main.h
  *
- * Created on August 9, 2014, 6:10 PM
+ *  Created on: 2012/12/23
+ *      Author: rindou
  */
 
-#ifndef CM_MAIN_H
-#define	CM_MAIN_H
-
+#ifndef KIRBY_MAIN_H_
+#define KIRBY_MAIN_H_
 
 #include <iostream>
 #include <vector>
@@ -35,18 +34,15 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/export.hpp>
+#include <boost/lexical_cast.hpp>
 
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
-#include <boost/ref.hpp>
-
-#include "MSILMAgent.h"
+#include "KirbyAgent.h"
 #include "Rule.h"
 #include "Element.h"
 #include "MT19937.h"
 #include "Dictionary.h"
 #include "LogBox.h"
-#include "MSILMParameters.h"
+#include "Parameters.h"
 #include "Distance.hpp"
 
 //construct function
@@ -58,68 +54,54 @@ construct_individuals(std::vector<Element>& inds, Dictionary &dic);
 //analyze function
 void
 unit_analyze(std::vector<double>& result_vector,
-    std::vector<Rule>& meanings, MSILMAgent& agent);
+    std::vector<Rule>& meanings, KirbyAgent& agent);
 
-double
-expression(std::vector<Rule>& meanings, MSILMAgent& agent);
+int
+expression(std::vector<Rule>& meanings, KirbyAgent& agent);
 
 void
 calculate_language_distance(
-    std::vector<double>& lev_sent_vector,
-    std::vector<double>& lev_word_vector,
-    std::vector<Rule>& meanings, std::vector<Element>& words, MSILMAgent& agent1,
-    MSILMAgent& agent2);
-
-double
-calculate_word_distance(std::vector<Element>&, KnowledgeBase&, KnowledgeBase&);
+    std::vector<double>& dist_vector,
+    std::vector<Rule>& meanings, KirbyAgent& agent1,KirbyAgent& agent2);
 
 void
-analyze_and_output(MSILMParameters& param, std::vector<Rule> meaning_space,
-    std::vector<Element> individuals, MSILMAgent& agent1, MSILMAgent& agent2, int index);
+analyze_and_output(Parameters& param, std::vector<Rule> meaning_space,
+    KirbyAgent& agent1, KirbyAgent& agent2);
 
-//sudo
+//language distance
 double
-calculate_sudo_distance(std::vector<Rule>& meanings,
-    KnowledgeBase& kb1, KnowledgeBase& kb2,double& word_length);
-
-void
-calculate_average_word_length(std::vector<Rule>& meanings,KnowledgeBase& kb1,double& word_length);
+calculate_distance(std::vector<Rule>& meanings,
+    KnowledgeBase& kb1, KnowledgeBase& kb2);
 
 std::string
 tr_vector_double_to_string(std::vector<double> vector);
 
-std::vector<int>
-choice_selected_meanings(std::vector<Rule> meanings,MSILMParameters param);
-
-double limit_time;
-
-void 
-cognition_init(std::vector<int>& source, MSILMParameters& param);
 
 template<typename _IFS>
 void resume_agent(
 		_IFS&,
-		MSILMParameters&,
+		Parameters&,
 		unsigned long long int&,
 		unsigned long long int&,
 		Dictionary&,
 		std::vector<Rule>&,
 		int&,
-		MSILMAgent&
+		KirbyAgent&
 		);
 
 template<typename _OFS>
 void save_agent(
 		_OFS&,
-		MSILMParameters&,
+		Parameters&,
 		unsigned long long int&,
 		unsigned long long int&,
 		Dictionary&,
 		std::vector<Rule>&,
 		int&,
-		MSILMAgent&
+		KirbyAgent&
 		);
 
+//std::vector<int> analyze(std::vector<Rule>& meanings, KirbyAgent& agent);
+//int expression(std::vector<Rule>& meanings, KirbyAgent& agent);
 
-#endif	/* CM_MAIN_H */
-
+#endif /* KIRBY_MAIN_H_ */

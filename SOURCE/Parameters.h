@@ -1,8 +1,8 @@
 /*
- * Parameters2.h
+ * Parameters.h
  *
- *  Created on: 2011/06/24
- *      Author: rindou
+ *  Created on: 2012/12/24
+ *      Author: Hiroki Sudo
  */
 
 #ifndef PARAMETERS_H_
@@ -23,19 +23,7 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/export.hpp>
-//#include <boost/filesystem.hpp>
-//#include <boost/filesystem/fstream.hpp>
-//#include <boost/filesystem/path.hpp>
-//#include <boost/iostreams/operations.hpp>
-#include <boost/random.hpp>
 
-//#include "KirbyAgent.h"
-//#include "Rule.h"
-//#include "Element.h"
-//#include "Random.hpp"
-//#include "MT19937.h"
-//#include "Dictionary.h"
-//#include "LogBox.h"
 #include "KnowledgeBase.h"
 
 class Parameters {
@@ -65,9 +53,9 @@ class Parameters {
     bool SAVE_LAST_STATE;
     bool SAVE_ALL_STATE;
     bool ANALYZE;
+	bool OMISSION;
     FORMAT SAVE_FORMAT;
 
-    //boost::filesystem::path DICTIONARY_FILE;
     std::string DICTIONARY_FILE;
 
     //file parameters
@@ -81,14 +69,9 @@ class Parameters {
     std::string LOG_EXT;
 
     //path
-    //boost::filesystem::path BASE_PATH;
     std::string BASE_PATH;
 
     //file
-    //boost::filesystem::path LOG_FILE;
-    //boost::filesystem::path RESUME_FILE;
-    //boost::filesystem::path SAVE_FILE;
-    //boost::filesystem::path RESULT_FILE;
     std::string LOG_FILE;
     std::string RESUME_FILE;
     std::string SAVE_FILE;
