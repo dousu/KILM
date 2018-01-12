@@ -20,10 +20,13 @@ S. Kirby(2002)が提案したILM(Iterated Learning Model, 繰り返し学習モ�
 ## 実行環境
 下記実行環境をあらかじめ用意してください．
 
-  ruby 2.4
-  boost 1.59推奨
-  c++14
-  gnuplot
+    ruby 2.4
+  
+    boost 1.59推奨
+  
+    c++14
+  
+    gnuplot
 
 
 ## make&実行
@@ -33,7 +36,7 @@ makeターゲットはkiとなっています．
 
 kilm.exeという実行ファイルができます．kilm.exeにオプションを付けて実行してください．オプションは-hで確認できます．
   
-  kilm.exe -h
+    kilm.exe -h
   
 
 ## 実行ユーティリティ
