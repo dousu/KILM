@@ -10,9 +10,9 @@ OPT = --std=c++14 -O2
 ki: ${OBJS}
 	${CXX} ${OPT} ${SOURCEDIR}/KILM_main.cpp ${OBJS} ${LD} ${LIBS} -o ${SOURCEDIR}/kilm.exe
 
-$(SOURCEDIR)/%.o: %.cpp
+$(SOURCEDIR)/%.o: $(SOURCEDIR)/%.cpp
 	@[ -d $(SOURCEDIR/) ]
-	${CXX} ${OPT} ${LD} ${LIBS} -o $@ -c $<
+	${CXX} ${OPT} ${ID} -o $@ -c $<
 
 KILM_main.cpp: KirbyAgent.o Rule.o Element.o LogBox.o Parameters.o MT19937.o ${HDS} KILM_main.h
 KirbyAgent.o: KnowledgeBase.o LogBox.o KirbyAgent.h
